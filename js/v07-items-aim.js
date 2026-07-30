@@ -70,10 +70,11 @@
 
   function canvasPoint(event,g){
     const canvas=q('canvas'), rect=canvas.getBoundingClientRect();
-    return {
+    const screen={
       x:(event.clientX-rect.left)*(g.w/rect.width),
       y:(event.clientY-rect.top)*(g.h/rect.height)
     };
+    return window.DerpeditCamera?window.DerpeditCamera.screenToWorld(g,screen.x,screen.y):screen;
   }
 
   function updatePointerAim(g,point){
@@ -243,6 +244,8 @@
 
   function drawCombat(g){
     const ctx=g?.ctx;if(!ctx)return;
+    ctx.save();
+    if(window.DerpeditCamera)window.DerpeditCamera.apply(g,ctx);
     for(const bullet of g.projectiles||[]){
       ctx.save();ctx.fillStyle=bullet.color||'#ffd33d';
       ctx.beginPath();ctx.arc(bullet.x+bullet.w/2,bullet.y+bullet.h/2,bullet.w/2,0,Math.PI*2);ctx.fill();ctx.restore();
@@ -257,6 +260,7 @@
       ctx.arc(cx,cy,swing.range,angle-swing.arc/2,angle+swing.arc/2);
       ctx.closePath();ctx.fill();ctx.restore();
     }
+    ctx.restore();
   }
 
   addEventListener('keydown',event=>{

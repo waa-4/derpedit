@@ -1,55 +1,51 @@
-DERPEDIT v0.7.1 — COMBAT & OPTIONAL ONLINE
+DERPEDIT v0.8 — WORLD & CAMERA
 
-BASED ON
-- The classic v0.7 build.
-- Rendering, textures, colors, scaling, camera, Rooms, physics, movement, and editor layout remain unchanged.
+This update fixes the Camera controls that were already present in the Rooms tab.
+It does not replace the classic renderer, textures, colors, physics, combat,
+Room UI, or editor appearance.
 
-BULLET COLLISION FIX
-- Bullets now recognize Enemy Beings, chase Beings, and opposing-team Beings.
-- Collision uses both normal overlap and swept collision.
-- Swept collision prevents fast projectiles from passing completely through an enemy between frames.
-- Bullets damage enemies and disappear on impact.
-- Enemy health reaching zero destroys that enemy.
+ROOM CAMERA OPTIONS
 
-MELEE
-1. Create or select an Item.
-2. Turn on Usable / weapon.
-3. Set Weapon Type to Melee.
-4. Configure:
-   - Melee Range
-   - Melee Arc
-   - Melee Damage
-   - Swing Time
-   - Knockback
-   - Hit Once Per Swing
-5. Equip the Item and click, press F, or press Space in a top-down game.
-6. The melee arc follows the same 360-degree aiming system.
+Fixed
+- Keeps the camera at world position 0,0.
+- Works like the original screen-sized Play Mode.
 
-OPTIONAL SUPABASE ONLINE
-- Press the new Online button.
-- Enter:
-  1. Supabase Project URL
-  2. Browser-safe Publishable key, or a legacy anon key
-- Never paste a secret key or service_role key into a browser game.
-- Online remains disabled unless explicitly enabled.
-- Offline games continue working without Supabase.
+Follow Player
+- Follows the Player Being.
+- Uses Room Width and Room Height as world boundaries.
+- The player can travel across Rooms much larger than the visible screen.
+- The camera stays inside the Room, so it does not reveal empty space beyond
+  the Room edges.
 
-LEADERBOARD SETUP
-- Run SUPABASE_SETUP.sql in the Supabase SQL Editor.
-- The included table supports multiple games and multiple online value names.
-- Configure allowed names such as:
-  Score, Coins, BestTime
-- Runtime API:
-  await DerpeditOnline.submitScore("Score", 250, "Player")
-  await DerpeditOnline.getLeaderboard("Score", 10)
+Infinite + Follow Player
+- Follows the Player without Room boundaries.
+- The player and camera may continue in any direction.
+- Objects retain their world positions.
 
-SECURITY NOTE
-- The included example allows public reading and public score submission.
-- It uses Row Level Security and basic database checks.
-- A public anonymous leaderboard cannot fully prevent cheating because players control their browser.
-- For important competitive games, use authenticated users and server-side validation.
+Infinite Room checkbox
+- Removes Room bounds while preserving the selected camera behavior.
+- For an actually moving infinite camera, use Follow Player or
+  Infinite + Follow Player.
 
-FILES
-- js/v07-items-aim.js: combat, aiming, ranged, and melee.
-- js/online.js: optional Supabase connection and leaderboard API.
-- SUPABASE_SETUP.sql: database table, RLS policies, and ranking index.
+CAMERA FIXES
+- Room Width and Room Height now control the playable world instead of being
+  ignored.
+- The player is no longer clamped to the visible canvas.
+- Camera following is smooth and centered on the Player.
+- Imported textures, object colors, rotations, and sizes use the same rendering
+  code as before.
+- UI-layer Objects remain fixed to the screen.
+- World Objects, bullets, and melee attack arcs move with the camera.
+- Mouse aiming converts screen coordinates into world coordinates, so shooting
+  remains accurate while the camera moves.
+- Fast bullet collision and melee attacks from v0.7.1 remain included.
+
+TEST
+1. Open the Rooms tab.
+2. Select a Game Room.
+3. Set Camera to Follow Player.
+4. Set Room Width to 3000 and Room Height to 1500.
+5. Place Objects beyond the initial visible screen.
+6. Press Play and move toward them.
+
+The editor's right-click pan and mouse-wheel zoom are unchanged.

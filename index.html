@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v0.7.1</title>
+<title>Derpedit v0.8</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.7.1 — Combat & Optional Online</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="onlineBtn">🌐 Online</button><button id="export">Export Game HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.8 — World & Camera</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="onlineBtn">🌐 Online</button><button id="export">Export Game HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Objects</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Sprites</button><button data-tab="toolbox">Toolbox</button></div>
@@ -133,6 +133,7 @@ await DerpeditOnline.getLeaderboard("Score", 10)</pre>
 <script src="js/editor-camera.js"></script>
 <script src="js/v04.js"></script>
 <script src="js/v05.js"></script>
+<script src="js/runtime-camera.js"></script>
 <script src="js/v07-items-aim.js"></script>
 <script src="js/online.js"></script>
 </body>
