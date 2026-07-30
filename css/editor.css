@@ -24,3 +24,8 @@
 .audioItem{display:flex;align-items:center;gap:6px}
 .audioItem button{flex:0 0 auto}
 .small{font-size:11px}
+
+/* v0.4.1 Script & Display patch */
+.obj.script{background:repeating-linear-gradient(135deg,#7f5cff,#7f5cff 10px,#4d328d 10px,#4d328d 20px)!important;border:2px dashed #d9ceff;color:white;font-weight:900;letter-spacing:1px}
+.runtimeMessage{position:absolute;left:50%;bottom:38px;transform:translateX(-50%);min-width:240px;max-width:min(720px,85%);padding:14px 18px;border-radius:10px;background:#080b12e8;border:1px solid #ffffff44;color:white;text-align:center;font-size:22px;font-weight:700;z-index:999;pointer-events:none;white-space:pre-wrap;box-shadow:0 8px 30px #0009}
+.playing #grid,.playing #layer{display:none!important}

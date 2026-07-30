@@ -8,12 +8,12 @@
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.4 — 2D Foundation</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.4.1 — Script & Display Patch</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Parts</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Assets</button><button data-tab="toolbox">Toolbox</button></div>
 <div id="tab-parts">
-<h2>BASIC PARTS</h2><div class="palette"><button data-add="player">🟦 Player</button><button data-add="enemy">🟥 Enemy</button><button data-add="wall">⬜ Wall</button><button data-add="coin">🟨 Coin</button><button data-add="damage">☠ Damage</button><button data-add="spawn">✦ Spawn</button></div>
+<h2>BASIC PARTS</h2><div class="palette"><button data-add="player">🟦 Player</button><button data-add="enemy">🟥 Enemy</button><button data-add="wall">⬜ Wall</button><button data-add="coin">🟨 Coin</button><button data-add="damage">☠ Damage</button><button data-add="spawn">✦ Spawn</button><button data-add="script">📜 Script</button></div>
 <h2>UI PARTS</h2><div class="palette"><button data-add="button">▣ Button</button><button data-add="label">T Label</button><button data-add="healthbar">♥ Health Bar</button><button data-add="text">T World Text</button></div>
 <h2>SELECTED ROOM PARTS</h2><div id="scene" class="roomList"></div><p class="muted">Drag the center to move. Drag a corner handle to resize.</p>
 </div>
@@ -28,7 +28,7 @@
 <div id="assets" class="assetList section"></div><h2>MUSIC</h2><div id="musicAssets" class="assetList"></div><p class="muted">Select an image asset, then apply it to a Part. Music can be assigned per Room.</p></div>
 <div id="tab-toolbox" class="hidden"><h2>PERSONAL TOOLBOX</h2><div class="toolboxActions"><button id="refreshToolbox">Refresh</button><button id="clearToolbox" class="danger">Clear Toolbox</button></div><div id="toolboxList" class="assetList section"></div><p class="muted">Toolbox assets are saved in this browser and can be imported into any Derpedit project.</p></div>
 </aside>
-<section class="workspaceWrap"><div class="bar"><strong id="mode">BUILD MODE</strong><label><input id="snap" type="checkbox" checked> Grid snap</label><span id="roomLabel"></span><span id="status">Ready.</span></div><div class="workspace" id="workspace"><div class="grid" id="grid"></div><div id="layer"></div><div class="playLayer hidden" id="playLayer"><div class="hud"><span id="score">Health: 100</span><button id="stop">■ Stop</button></div><canvas id="canvas"></canvas><div id="playButtons" class="playButtons"></div></div></div></section>
+<section class="workspaceWrap"><div class="bar"><strong id="mode">BUILD MODE</strong><label><input id="snap" type="checkbox" checked> Grid snap</label><span id="roomLabel"></span><span id="status">Ready.</span></div><div class="workspace" id="workspace"><div class="grid" id="grid"></div><div id="layer"></div><div class="playLayer hidden" id="playLayer"><div class="hud"><span id="score">Health: 100</span><button id="stop">■ Stop</button></div><canvas id="canvas"></canvas><div id="playButtons" class="playButtons"></div><div id="runtimeMessage" class="runtimeMessage hidden"></div></div></div></section>
 <aside class="panel right"><h2>PART PROPERTIES</h2><div id="none" class="muted">Select a Part to edit it.</div><div id="props" class="props hidden">
 <label>Name / ID<input id="name"></label><div class="two"><label>X<input id="x" type="number"></label><label>Y<input id="y" type="number"></label></div><div class="two"><label>Width<input id="w" type="number" min="8"></label><label>Height<input id="h" type="number" min="8"></label></div><label>Rotation<input id="rot" type="number"></label><label>Color<input id="color" type="color"></label><label>Space<select id="partLayer"><option value="world">World</option><option value="ui">UI</option></select></label>
 <div class="two"><label>Render Layer<input id="renderLayer" type="number" value="0"></label><label>Opacity %<input id="opacity" type="number" min="0" max="100" value="100"></label></div>
@@ -44,7 +44,7 @@
 </div>
 <div id="combatFields"><div class="two"><label>Health<input id="health" type="number"></label><label>Damage<input id="damage" type="number"></label></div><label>Damage cooldown<input id="cooldown" type="number" step="0.1" min="0"></label><label>Speed<input id="speed" type="number"></label><label>Behavior<select id="behavior"><option value="none">None</option><option value="player">Player controls</option><option value="chase">Chase player</option><option value="solid">Solid wall</option><option value="coin">Collectible</option><option value="damage">Damage Part</option><option value="spawn">Spawn marker</option></select></label></div>
 <label id="textWrap">Text<input id="text"></label><div id="buttonFields"><label>Button action<select id="action"><option value="none">None</option><option value="goto">Go to Room</option><option value="restart">Restart Room</option></select></label><label>Target Room<select id="targetRoom"></select></label></div>
-<label>DerpyScript<textarea id="script" spellcheck="false" placeholder="when game starts\nspeed 140\nfollow Player\n\nwhen collided with Player\ntake damage 10"></textarea></label><p class="muted">Supported now: speed, follow, damage, health, wait, when collided with, take damage, destroy self, go to room.</p>
+<label>DerpyScript<textarea id="script" spellcheck="false" placeholder="when game starts\nspeed 140\nfollow Player\n\nwhen collided with Player\ntake damage 10"></textarea></label><p class="muted">Events: when game starts, when clicked, when collided with ___. Commands include display, text, color, values, conditions, sprite changes, physics, damage, and room changes.</p>
 <button id="applyAsset">Apply selected asset</button><button id="dup">Duplicate</button><button id="del" class="danger">Delete</button></div>
 <h2>PROJECT</h2><label class="stack">Name<input id="projectName" value="My Derpedit Game"></label><label class="stack">Game type<select id="gameType"><option value="topdown">2D Top Down</option><option value="platformer">2D Platformer</option></select></label><label class="stack">Background<input id="bg" type="color" value="#202633"></label></aside>
 </div>
@@ -56,5 +56,6 @@
 <script src="js/app.js"></script>
 <script src="js/toolbox.js"></script>
 <script src="js/v04.js"></script>
+<script src="js/v041.js"></script>
 </body>
 </html>
