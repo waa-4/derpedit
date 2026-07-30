@@ -3,14 +3,17 @@
   const q=id=>document.getElementById(id);
 
   function bindItem(id,key,{number=false,checkbox=false}={}){
-    const el=q(id); if(!el)return;
+    const el=q(id);
+    if(!el)return;
     el.onchange=()=>{
-      const o=selected();if(!o||o.type!=='item')return;
+      const o=selected();
+      if(!o||o.type!=='item')return;
       checkpoint();
       o[key]=checkbox?el.checked:number?Number(el.value):el.value;
       render();
     };
   }
+
   bindItem('equipOnPickup','equipOnPickup',{checkbox:true});
   bindItem('itemUsable','itemUsable',{checkbox:true});
   bindItem('weaponType','weaponType');
@@ -21,138 +24,208 @@
   bindItem('projectileCount','projectileCount',{number:true});
   bindItem('projectileSpread','projectileSpread',{number:true});
 
-  function getEquippedItem(g){
-    return (g.hotbar||[]).find(x=>(x.itemId||x.name)===g.equipped)||null;
+  function itemId(item){return item?.itemId||item?.name||'Item'}
+
+  function equippedItem(g){
+    return (g?.hotbar||[]).find(item=>itemId(item)===g.equipped)||null;
   }
 
   function renderHotbar(g){
     const box=q('runtimeHotbar');
     if(!box)return;
-    if(!g||!g.hotbar?.length){box.classList.add('hidden');box.innerHTML='';return}
-    box.classList.remove('hidden');box.innerHTML='';
+    if(!g?.hotbar?.length){
+      box.classList.add('hidden');
+      box.innerHTML='';
+      return;
+    }
+    box.classList.remove('hidden');
+    box.innerHTML='';
     g.hotbar.slice(0,9).forEach((item,index)=>{
-      const id=item.itemId||item.name;
-      const b=document.createElement('button');
-      b.className='hotbarSlot'+(g.equipped===id?' equipped':'');
-      b.innerHTML=`<span>${index+1}</span><strong>${id}</strong><small>x${g.inventory[id]||0}</small>`;
-      b.onclick=()=>{g.equipped=id;p.runtimeInventory.equipped=id;renderHotbar(g);persistProject()};
-      box.appendChild(b);
+      const id=itemId(item);
+      const button=document.createElement('button');
+      button.className='hotbarSlot'+(g.equipped===id?' equipped':'');
+      button.innerHTML=`<span>${index+1}</span><strong>${id}</strong><small>x${g.inventory[id]||0}</small>`;
+      button.onclick=event=>{
+        event.stopPropagation();
+        g.equipped=id;
+        if(runState)runState.equipped=id;
+        renderHotbar(g);
+        status(id+' equipped.');
+      };
+      box.appendChild(button);
     });
   }
-
   window.renderRuntimeHotbar=renderHotbar;
 
-  function playerCenter(g){
-    return {x:g.pl.x+g.pl.w/2,y:g.pl.y+g.pl.h/2};
+  function canvasPoint(event){
+    const canvas=q('canvas');
+    const rect=canvas.getBoundingClientRect();
+    return {
+      x:(event.clientX-rect.left)*(canvas.clientWidth/rect.width),
+      y:(event.clientY-rect.top)*(canvas.clientHeight/rect.height)
+    };
   }
-  function shoot(g){
-    const item=getEquippedItem(g);
-    if(!item||!item.itemUsable||item.weaponType!=='projectile')return;
+
+  function firingDirection(g,target){
+    const cx=g.pl.x+g.pl.w/2;
+    const cy=g.pl.y+g.pl.h/2;
+    let dx,dy;
+    if(target){
+      dx=target.x-cx;
+      dy=target.y-cy;
+    }else{
+      dx=g.pl.aimDX??1;
+      dy=g.pl.aimDY??0;
+    }
+    const length=Math.hypot(dx,dy)||1;
+    return {x:dx/length,y:dy/length};
+  }
+
+  function shoot(g,target=null){
+    const item=equippedItem(g);
+    if(!item){
+      status('Equip an Item first.');
+      return;
+    }
+    if(!item.itemUsable||item.weaponType!=='projectile'){
+      status(itemId(item)+' is not configured as a ranged weapon.');
+      return;
+    }
+
     const now=performance.now();
-    const cooldown=(item.weaponCooldown??.25)*1000;
-    if(now-g.lastShotAt<cooldown)return;
+    const cooldown=Math.max(0,Number(item.weaponCooldown??.25))*1000;
+    if(now-(g.lastShotAt||0)<cooldown)return;
     g.lastShotAt=now;
-    const c=playerCenter(g);
-    const count=Math.max(1,Math.floor(item.projectileCount||1));
-    const spread=Number(item.projectileSpread||0);
+
+    const center={x:g.pl.x+g.pl.w/2,y:g.pl.y+g.pl.h/2};
+    const base=firingDirection(g,target);
+    const baseAngle=Math.atan2(base.y,base.x);
+    const count=Math.max(1,Math.floor(Number(item.projectileCount)||1));
+    const spreadRadians=Math.max(0,Number(item.projectileSpread)||0)*Math.PI/180;
+    const speed=Math.max(1,Number(item.projectileSpeed)||520);
+
     for(let i=0;i<count;i++){
-      const t=count===1?0:(i/(count-1)-.5);
-      const angle=(g.pl.facing==='left'?180:0)+t*spread;
-      const rad=angle*Math.PI/180;
+      const offset=count===1?0:(i/(count-1)-.5)*spreadRadians;
+      const angle=baseAngle+offset;
+      const radius=Math.max(g.pl.w,g.pl.h)/2+7;
       g.projectiles.push({
-        x:c.x-5,y:c.y-5,w:10,h:10,
-        vx:Math.cos(rad)*(item.projectileSpeed||520),
-        vy:Math.sin(rad)*(item.projectileSpeed||520),
-        damage:item.projectileDamage??15,
-        born:now,lifetime:(item.projectileLifetime||3)*1000,
+        x:center.x+Math.cos(angle)*radius-5,
+        y:center.y+Math.sin(angle)*radius-5,
+        w:10,h:10,
+        vx:Math.cos(angle)*speed,
+        vy:Math.sin(angle)*speed,
+        damage:Math.max(0,Number(item.projectileDamage??15)),
+        born:now,
+        lifetime:Math.max(.1,Number(item.projectileLifetime)||3)*1000,
         color:item.color||'#ffd33d'
       });
     }
   }
+  window.derpShoot=shoot;
+
+  function overlaps(a,b){
+    return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+  }
 
   function updateProjectiles(g,dt,now){
     for(const bullet of g.projectiles||[]){
-      bullet.x+=bullet.vx*dt;bullet.y+=bullet.vy*dt;
-      if(now-bullet.born>bullet.lifetime)bullet.dead=true;
+      bullet.x+=bullet.vx*dt;
+      bullet.y+=bullet.vy*dt;
+
+      if(now-bullet.born>=bullet.lifetime||
+         bullet.x<-100||bullet.y<-100||
+         bullet.x>g.w+100||bullet.y>g.h+100){
+        bullet.dead=true;
+        continue;
+      }
+
+      for(const wall of g.O.filter(o=>(o.type==='collisionblock'||o.behavior==='solid')&&!o.destroyed)){
+        if(overlaps(bullet,wall)){
+          bullet.dead=true;
+          break;
+        }
+      }
+      if(bullet.dead)continue;
+
       for(const enemy of g.O.filter(o=>o.type==='being'&&o.beingRole==='enemy'&&!o.destroyed)){
-        if(bullet.x<enemy.x+enemy.w&&bullet.x+bullet.w>enemy.x&&bullet.y<enemy.y+enemy.h&&bullet.y+bullet.h>enemy.y){
+        if(overlaps(bullet,enemy)){
           enemy.health=(enemy.health??100)-bullet.damage;
           bullet.dead=true;
           if(enemy.health<=0)enemy.destroyed=true;
           break;
         }
       }
-      for(const wall of g.O.filter(o=>(o.type==='collisionblock'||o.behavior==='solid')&&!o.destroyed)){
-        if(bullet.x<wall.x+wall.w&&bullet.x+bullet.w>wall.x&&bullet.y<wall.y+wall.h&&bullet.y+bullet.h>wall.y){
-          bullet.dead=true;break;
-        }
-      }
     }
     g.projectiles=(g.projectiles||[]).filter(b=>!b.dead);
   }
 
-  function drawProjectiles(g,ctx){
-    for(const b of g.projectiles||[]){
-      ctx.fillStyle=b.color||'#ffd33d';
-      ctx.fillRect(b.x,b.y,b.w,b.h);
+  function drawProjectiles(g){
+    const ctx=g?.ctx;
+    if(!ctx)return;
+    for(const bullet of g.projectiles||[]){
+      ctx.save();
+      ctx.fillStyle=bullet.color||'#ffd33d';
+      ctx.beginPath();
+      ctx.arc(bullet.x+bullet.w/2,bullet.y+bullet.h/2,bullet.w/2,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
     }
   }
 
-  // Number keys equip hotbar slots. Space or mouse click uses equipped item.
-  addEventListener('keydown',e=>{
+  addEventListener('keydown',event=>{
     if(!game)return;
-    if(/^[1-9]$/.test(e.key)){
-      const item=game.hotbar[Number(e.key)-1];
+
+    if(/^[1-9]$/.test(event.key)){
+      const item=game.hotbar?.[Number(event.key)-1];
       if(item){
-        game.equipped=item.itemId||item.name;
-        p.runtimeInventory.equipped=game.equipped;
-        renderHotbar(game);persistProject();
+        game.equipped=itemId(item);
+        if(runState)runState.equipped=game.equipped;
+        renderHotbar(game);
+        status(game.equipped+' equipped.');
       }
+      return;
     }
-    if(e.code==='Space'){e.preventDefault();shoot(game)}
+
+    if(event.key.toLowerCase()==='f'){
+      event.preventDefault();
+      shoot(game);
+    }
+
+    // Space shoots in top-down games. In platformers it remains Jump.
+    if(event.code==='Space'&&p.gameType!=='platformer'){
+      event.preventDefault();
+      shoot(game);
+    }
   });
-  q('canvas')?.addEventListener('pointerdown',()=>{if(game)shoot(game)});
 
-  // Patch room changes so the same hotbar and equipped item survive.
-  const originalStart=startGame;
-  startGame=function(id){
-    // Preserve current run state before changing Rooms.
-    if(game){
-      p.runtimeInventory??={inventory:{},hotbar:[],equipped:null};
-      p.runtimeInventory.inventory=game.inventory||p.runtimeInventory.inventory;
-      p.runtimeInventory.hotbar=game.hotbar||p.runtimeInventory.hotbar;
-      p.runtimeInventory.equipped=game.equipped||p.runtimeInventory.equipped;
-    }
-    p.runtimeInventory??={inventory:{},hotbar:[],equipped:null};
-    originalStart(id);
-    if(game){
-      game.inventory=p.runtimeInventory.inventory;
-      game.hotbar=p.runtimeInventory.hotbar;
-      game.equipped=p.runtimeInventory.equipped;
-      game.projectiles=[];
-      renderHotbar(game);
-    }
-  };
+  q('canvas')?.addEventListener('pointerdown',event=>{
+    if(!game)return;
+    const point=canvasPoint(event);
+    game.aimX=point.x;
+    game.aimY=point.y;
+    shoot(game,point);
+  });
 
-  // Wrap loop: update projectiles before the normal draw, then draw them after.
   const originalLoop=loop;
   loop=function(t){
-    if(game){
+    const active=game;
+    if(active){
       const now=performance.now();
-      const previous=game._weaponLastTime||now;
+      const previous=active._projectileTime||now;
       const dt=Math.min(.05,Math.max(0,(now-previous)/1000));
-      game._weaponLastTime=now;
-      updateProjectiles(game,dt,now);
+      active._projectileTime=now;
+      updateProjectiles(active,dt,now);
     }
+
     originalLoop(t);
-    if(game){
-      const canvas=q('canvas');
-      const ctx=canvas?.getContext('2d');
-      if(ctx)drawProjectiles(game,ctx);
-      renderHotbar(game);
+
+    if(game===active&&active){
+      drawProjectiles(active);
+      renderHotbar(active);
     }
   };
 
-  // Ensure stopping play hides the hotbar.
-  q('stop')?.addEventListener('click',()=>q('runtimeHotbar')?.classList.add('hidden'));
+  q('stop')?.addEventListener('click',()=>{
+    q('runtimeHotbar')?.classList.add('hidden');
+  });
 })();
