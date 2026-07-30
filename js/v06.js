@@ -34,10 +34,12 @@
       const b=document.createElement('button');
       b.className='hotbarSlot'+(g.equipped===id?' equipped':'');
       b.innerHTML=`<span>${index+1}</span><strong>${id}</strong><small>x${g.inventory[id]||0}</small>`;
-      b.onclick=()=>{g.equipped=id;persistentRun.equipped=id;renderHotbar(g);persistProject()};
+      b.onclick=()=>{g.equipped=id;p.runtimeInventory.equipped=id;renderHotbar(g);persistProject()};
       box.appendChild(b);
     });
   }
+
+  window.renderRuntimeHotbar=renderHotbar;
 
   function playerCenter(g){
     return {x:g.pl.x+g.pl.w/2,y:g.pl.y+g.pl.h/2};
@@ -102,7 +104,7 @@
       const item=game.hotbar[Number(e.key)-1];
       if(item){
         game.equipped=item.itemId||item.name;
-        persistentRun.equipped=game.equipped;
+        p.runtimeInventory.equipped=game.equipped;
         renderHotbar(game);persistProject();
       }
     }
@@ -114,16 +116,16 @@
   const originalStart=window.startGame;
   window.startGame=function(id){
     // Preserve current run state before changing Rooms.
-    if(window.game){
-      persistentRun.inventory=game.inventory||persistentRun.inventory;
-      persistentRun.hotbar=game.hotbar||persistentRun.hotbar;
-      persistentRun.equipped=game.equipped||persistentRun.equipped;
+    if(game){
+      p.runtimeInventory.inventory=game.inventory||p.runtimeInventory.inventory;
+      p.runtimeInventory.hotbar=game.hotbar||p.runtimeInventory.hotbar;
+      p.runtimeInventory.equipped=game.equipped||p.runtimeInventory.equipped;
     }
     originalStart(id);
-    if(window.game){
-      game.inventory=persistentRun.inventory;
-      game.hotbar=persistentRun.hotbar;
-      game.equipped=persistentRun.equipped;
+    if(game){
+      game.inventory=p.runtimeInventory.inventory;
+      game.hotbar=p.runtimeInventory.hotbar;
+      game.equipped=p.runtimeInventory.equipped;
       game.projectiles=[];
       renderHotbar(game);
     }
@@ -132,14 +134,14 @@
   // Wrap loop: update projectiles before the normal draw, then draw them after.
   const originalLoop=window.loop;
   window.loop=function(t){
-    if(window.game){
+    if(game){
       const now=performance.now();
       const dt=Math.min(.05,((game._weaponLastTime||now)-now)*-0.001||0);
       game._weaponLastTime=now;
       updateProjectiles(game,dt,now);
     }
     originalLoop(t);
-    if(window.game){
+    if(game){
       const canvas=q('playCanvas');
       const ctx=canvas?.getContext('2d');
       if(ctx)drawProjectiles(game,ctx);
