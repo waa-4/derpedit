@@ -51,3 +51,17 @@
 .workspace.cameraDragging *{cursor:grabbing!important;user-select:none!important}
 #layer,#grid{will-change:transform}
 #editorCameraReadout{margin-left:8px;white-space:nowrap}
+
+/* v0.5 Objects, Sprites, Items, Custom Scripts */
+.obj.scriptobject{border:2px dashed #b89cff;background-image:repeating-linear-gradient(135deg,#8d5cff55 0 8px,#5f3bb755 8px 16px)}
+.obj.item{border-radius:8px}
+.guideBox{width:min(920px,92vw);max-height:88vh;overflow:auto}
+.guideSearch{width:100%;box-sizing:border-box;margin:10px 0 14px;padding:12px}
+.guideCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.guideCard{padding:12px;border:1px solid #ffffff22;border-radius:10px;background:#111a26}
+.guideCard code{display:block;font-size:15px;color:#61efff;margin:4px 0 8px}
+.guideCard p{min-height:42px}
+.guideCard pre,.guideExample{white-space:pre-wrap;background:#070c13;padding:10px;border-radius:8px;overflow:auto}
+.guideCategory{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.08em}
+.toolboxEntry{display:flex;margin-bottom:6px}
+.toolboxEntry button{width:100%;text-align:left}

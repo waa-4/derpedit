@@ -1,24 +1,32 @@
-
 'use strict';
 window.DerpyScript = (() => {
   const commandDocs = [
-    ['physics on/off','Enable or disable physical simulation.'],
-    ['gravity on/off','Enable or disable gravity while physics is active.'],
-    ['collision on/off','Enable or disable collisions.'],
-    ['opacity 0-100','Change Part transparency.'],
-    ['team TeamName','Assign the Part to a team.'],
-    ['speed 140','Set movement speed.'],
-    ['health 100','Set health.'],
-    ['damage 15','Set damage.'],
-    ['go to room Name','Change Rooms.'],
-    ['create block','Create a full Part at runtime.'],
-    ['block script "..."','Give a created Part its own DerpyScript.'],
-    ['say "Hello"','Show a temporary message.']
+    {command:'when game starts', category:'Events', description:'Runs the following commands when the Room begins.', example:'when game starts\nrun Setup'},
+    {command:'when collided with ___', category:'Events', description:'Runs commands when this Object touches the named Object, ID, or Object type.', example:'when collided with Player\ntake damage 10'},
+    {command:'wait ___', category:'Timing', description:'Waits for a number of seconds before continuing inside a custom script or loop.', example:'wait 1'},
+    {command:'loop "___"', category:'Timing', description:'Repeats the quoted command sequence forever. Commands inside the quotes run from left to right.', example:'loop "run Change wait 1 run Change2 wait 1"'},
+    {command:'customscript title=___ "___"', category:'Custom Scripts', description:'Creates a reusable named DerpyScript sequence. Script Objects are recommended for storing these definitions.', example:'customscript title=Change "id Test sprite Red"'},
+    {command:'run ___', category:'Custom Scripts', description:'Runs a custom script by title.', example:'run Change'},
+    {command:'id ___ sprite ___', category:'Sprites', description:'Changes the sprite of the Object whose Name / ID matches the first value.', example:'id Test sprite Red'},
+    {command:'sprite ___', category:'Sprites', description:'Changes this Object to the named sprite.', example:'sprite Blue'},
+    {command:'physics on/off', category:'Physics', description:'Enables or disables physical simulation.', example:'physics on'},
+    {command:'gravity on/off', category:'Physics', description:'Enables or disables gravity while physics is active.', example:'gravity off'},
+    {command:'collision on/off', category:'Physics', description:'Enables or disables collision.', example:'collision on'},
+    {command:'opacity 0-100', category:'Appearance', description:'Changes Object transparency.', example:'opacity 50'},
+    {command:'team ___', category:'Beings', description:'Assigns the Object to a team.', example:'team Blue'},
+    {command:'speed ___', category:'Beings', description:'Sets movement speed.', example:'speed 140'},
+    {command:'health ___', category:'Beings', description:'Sets health.', example:'health 100'},
+    {command:'damage ___', category:'Beings', description:'Sets contact damage.', example:'damage 15'},
+    {command:'take damage ___', category:'Beings', description:'Removes health from the Object running the command.', example:'take damage 10'},
+    {command:'destroy self', category:'Objects', description:'Deletes this runtime Object.', example:'destroy self'},
+    {command:'go to room ___', category:'Rooms', description:'Changes to a Room by name or ID.', example:'go to room Level 2'},
+    {command:'display "___"', category:'UI', description:'Displays temporary dialogue or a message.', example:'display "Hello!"'},
+    {command:'give ___', category:'Items', description:'Adds an Item to the player inventory.', example:'give Sword'},
+    {command:'remove ___', category:'Items', description:'Removes one matching Item from the player inventory.', example:'remove Potion'},
+    {command:'if has ___', category:'Items', description:'Checks whether the inventory contains an Item. Full condition blocks are still being expanded.', example:'if has Key'},
   ];
 
-  function boolValue(word) {
-    return /^(on|true|yes)$/i.test(word);
-  }
+  const boolValue = word => /^(on|true|yes)$/i.test(word);
 
   function applyStartCommands(part) {
     const lines = String(part.script || '').split(/\n/).map(v => v.trim()).filter(Boolean);
@@ -40,6 +48,30 @@ window.DerpyScript = (() => {
     return part;
   }
 
+  function collectCustomScripts(objects) {
+    const scripts = {};
+    const pattern = /customscript\s+title=([^\s"]+)\s+"([^"]*)"/gi;
+    for (const object of objects || []) {
+      const source = String(object.script || '');
+      let match;
+      while ((match = pattern.exec(source))) scripts[match[1].trim().toLowerCase()] = match[2].trim();
+    }
+    return scripts;
+  }
+
+  function tokenizeSequence(source) {
+    const tokens = [];
+    const re = /\b(wait)\s+([\d.]+)|\b(run)\s+([A-Za-z0-9_-]+)|\bid\s+([A-Za-z0-9_-]+)\s+sprite\s+([A-Za-z0-9 _-]+?)(?=\s+(?:wait|run|id)\b|$)|\bsprite\s+([A-Za-z0-9 _-]+?)(?=\s+(?:wait|run|id)\b|$)/gi;
+    let m;
+    while ((m = re.exec(String(source || '')))) {
+      if (m[1]) tokens.push({type:'wait', seconds:Number(m[2]) || 0});
+      else if (m[3]) tokens.push({type:'run', title:m[4]});
+      else if (m[5]) tokens.push({type:'idSprite', id:m[5], sprite:m[6].trim()});
+      else if (m[7]) tokens.push({type:'sprite', sprite:m[7].trim()});
+    }
+    return tokens;
+  }
+
   function teamsHostile(a, b) {
     const ta = String(a?.team || 'Neutral');
     const tb = String(b?.team || 'Neutral');
@@ -47,5 +79,5 @@ window.DerpyScript = (() => {
     return ta !== tb;
   }
 
-  return { commandDocs, applyStartCommands, teamsHostile };
+  return { commandDocs, applyStartCommands, collectCustomScripts, tokenizeSequence, teamsHostile };
 })();

@@ -57,7 +57,7 @@
     if(!(p.music||[]).length)box.innerHTML='<div class="muted">No music yet.</div>';
   }
 
-  q('saveAssetToolbox').onclick=()=>{const a=p.assets.find(x=>x.id===selectedAsset);if(!a)return alert('Select an image asset first.');DerpToolbox.save(a);renderToolbox();status('Saved to Toolbox.')};
+  q('saveAssetToolbox').onclick=()=>{const a=p.assets.find(x=>x.id===selectedAsset);if(!a)return alert('Select a sprite first.');const copy=JSON.parse(JSON.stringify(a));copy.toolboxKind='sprite';DerpToolbox.save(copy);(window.renderToolboxV5||renderToolbox)();status('Sprite saved to Toolbox.')};
   q('refreshToolbox').onclick=renderToolbox;
   q('clearToolbox').onclick=()=>{if(confirm('Clear every Toolbox asset saved in this browser?')){DerpToolbox.clear();renderToolbox()}};
   function renderToolbox(){
