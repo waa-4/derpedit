@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v0.5.1</title>
+<title>Derpedit v0.6</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.5.1 — Insert & Autosave Fix</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.6 — Hotbar, Items & Ranged Weapons</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Objects</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Sprites</button><button data-tab="toolbox">Toolbox</button></div>
@@ -61,10 +61,17 @@
 </div>
 <div id="itemFields" class="section hidden">
 <h2>ITEM</h2>
-<label>Item ID<input id="itemId" placeholder="Sword"></label>
+<label>Item ID<input id="itemId" placeholder="Blaster"></label>
 <div class="two"><label>Stack Size<input id="stackSize" type="number" min="1" value="1"></label><label>Pickup Amount<input id="pickupAmount" type="number" min="1" value="1"></label></div>
-<label class="checkrow">Auto Pickup<input id="autoPickup" type="checkbox" checked></label>
+<label class="checkrow">Pickup by touching<input id="autoPickup" type="checkbox" checked></label>
+<label class="checkrow">Equip when picked up<input id="equipOnPickup" type="checkbox" checked></label>
+<label class="checkrow">Usable / weapon<input id="itemUsable" type="checkbox"></label>
+<label>Weapon Type<select id="weaponType"><option value="none">None</option><option value="projectile">Ranged projectile</option></select></label>
+<div class="two"><label>Projectile Speed<input id="projectileSpeed" type="number" min="1" value="520"></label><label>Damage<input id="projectileDamage" type="number" min="0" value="15"></label></div>
+<div class="two"><label>Cooldown (seconds)<input id="weaponCooldown" type="number" min="0" step="0.05" value="0.25"></label><label>Projectile lifetime<input id="projectileLifetime" type="number" min="0.1" step="0.1" value="3"></label></div>
+<div class="two"><label>Shot count<input id="projectileCount" type="number" min="1" value="1"></label><label>Spread (degrees)<input id="projectileSpread" type="number" min="0" value="0"></label></div>
 <label>Description<input id="itemDescription" placeholder="A useful item."></label>
+<p class="muted">Players pick this Item up by touching it. It is added to a Room-persistent hotbar and can equip automatically.</p>
 </div>
 <div id="scriptObjectFields" class="section hidden">
 <h2>SCRIPT OBJECT</h2>
@@ -99,5 +106,6 @@ loop "run Change wait 1 run Change2 wait 1"</pre>
 <script src="js/editor-camera.js"></script>
 <script src="js/v04.js"></script>
 <script src="js/v05.js"></script>
+<script src="js/v06.js"></script>
 </body>
 </html>

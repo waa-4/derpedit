@@ -65,3 +65,20 @@
 .guideCategory{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.08em}
 .toolboxEntry{display:flex;margin-bottom:6px}
 .toolboxEntry button{width:100%;text-align:left}
+
+/* v0.6 persistent runtime hotbar */
+.runtimeHotbar{
+ position:absolute;left:50%;bottom:16px;transform:translateX(-50%);
+ display:flex;gap:6px;z-index:9999;padding:7px;
+ background:#07101dcc;border:1px solid #ffffff22;border-radius:12px;
+ backdrop-filter:blur(7px)
+}
+.hotbarSlot{
+ width:76px;min-height:56px;position:relative;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;border:1px solid #ffffff33;
+ background:#111c2c;color:white;border-radius:8px
+}
+.hotbarSlot.equipped{outline:2px solid #61efff;background:#17334a}
+.hotbarSlot span{position:absolute;left:5px;top:3px;font-size:10px;opacity:.65}
+.hotbarSlot strong{max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hotbarSlot small{opacity:.7}
