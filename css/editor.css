@@ -34,3 +34,13 @@
   z-index: 10000;
   isolation: isolate;
 }
+
+/* v0.4.3 Being System */
+.obj.being{border-radius:50%}
+.obj.being-player{box-shadow:inset 0 0 0 3px #278cff66}
+.obj.being-enemy{box-shadow:inset 0 0 0 3px #e3424f88}
+.obj.being-neutral{box-shadow:inset 0 0 0 3px #9b8cff88}
+.workspace.playing #layer,
+.workspace.playing #grid{display:none!important}
+.workspace.playing #playLayer{display:block!important;z-index:999999!important}
+#beingFields.hidden{display:none!important}

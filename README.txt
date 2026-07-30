@@ -1,21 +1,20 @@
-DERPEDIT v0.4 — 2D Foundation
+DERPEDIT v0.4.3 — BEING SYSTEM
 
-Open index.html in a modern browser.
+Main change:
+- Player and Enemy are no longer separate palette Parts.
+- Add one Being, then choose its Being Type:
+  - Player
+  - Enemy
+  - Neutral / NPC
 
-Major changes:
-- Split into multiple JavaScript files and external CSS.
-- Stronger pixel-art grid, grid toggle, pixel undo/redo.
-- Browser-persistent Toolbox for reusable image assets.
-- Import PNG/JPG/WEBP/GIF images.
-- Import music and assign it per Room.
-- Room camera mode, room width/height, and infinite-room settings.
-- Render layers and Part opacity.
-- Physics, gravity, collision, and team properties.
-- Idle/walk/jump/fall animation asset slots.
-- Separate DerpyScript command module.
+Runtime behavior:
+- The Player-controlled Being is used as the room player.
+- Enemy Beings chase and damage the Player.
+- Neutral Beings do not automatically fight or move.
+- Old Player and Enemy objects migrate automatically into Beings.
 
-Compatibility:
-Old .derpedit projects are automatically given safe defaults for the new fields.
+Play-mode overlay protection:
+- The editor layer and grid are force-hidden while playing.
+- The runtime layer is forced above editor content.
 
-This is the v0.4 foundation. Camera scrolling, full physics simulation, animation playback,
-team combat, inventory/hotbar, and created-Part scripts are prepared for later expansion.
+Open index.html to run Derpedit.
