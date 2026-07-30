@@ -1,31 +1,38 @@
-DERPEDIT v0.7 — RUNTIME REWRITE
+DERPEDIT v0.7 — CLASSIC RUNTIME: ITEMS & AIMING
 
-The editor and Play Mode now use separate state.
+This version is based directly on the supplied v0.6.3 build.
 
-PLAY SESSION
-- Pressing Play always starts with an empty inventory.
-- Items and quantities never save into the project.
-- Changing Rooms through DerpeditRuntime.changeRoom(roomId) keeps the current inventory.
-- Pressing Stop destroys the entire play session.
-- Pressing Play again starts fresh.
+UNCHANGED
+- Classic Play Mode renderer
+- Imported textures and pixel-art rendering
+- Object colors and shapes
+- Canvas sizing and scaling
+- Camera behavior
+- Physics and movement
+- Enemy behavior
+- Rooms, UI objects, scripts, and the editor interface
 
-AIMING
-- Move the mouse over the game to aim in any direction.
-- Click/tap the game to shoot toward that exact point.
-- F shoots toward the current pointer aim.
-- Space shoots in top-down games.
-- Mobile uses the AIM / FIRE pad.
-- Number keys 1–9 equip hotbar slots.
+ITEM FIXES
+- Play inventory remains temporary and is never stored in project autosave.
+- Pressing Play starts a fresh run.
+- Room transitions preserve the current run's inventory.
+- Pressing Stop clears the run.
+- Returning to a Room during the same run does not let the same physical Item
+  object increase its count again.
+- Separate duplicate Item objects can still each be collected normally.
 
-ITEMS
-- Touching an Item adds it once to the hotbar.
-- Duplicate pickups increase only the current play-session quantity.
-- Equip when picked up selects it immediately.
+AIMING FIXES
+- Moving the mouse across the canvas updates aim continuously in all directions.
+- Clicking fires toward the exact cursor position.
+- F and Space use the latest cursor aim.
+- Before the cursor enters the game, keyboard firing falls back to the previous
+  movement-facing direction.
+- Pointer coordinates use the classic renderer's CSS-pixel coordinate space, so
+  browser scaling and device-pixel ratio do not force shots into one direction.
 
-RANGED WEAPON SETUP
-- Usable / weapon: On
+WEAPON SETUP
+- Usable / weapon: enabled
 - Weapon Type: Ranged projectile
-- Configure Speed, Damage, Cooldown, Lifetime, Count, and Spread.
+- Adjust damage, speed, cooldown, lifetime, count, and spread
 
-IMPORTANT
-Open the index.html inside this v0.7 folder. It loads js/v07-runtime.js. The old js/v06.js was removed.
+Open the index.html included in this folder. It loads js/v07-items-aim.js.

@@ -135,7 +135,19 @@ $('addRoom').onclick=()=>{checkpoint();const id=uid(),r={id,name:'Room '+(p.room
 function parseScript(o){const lines=(o.script||'').split(/\n/).map(s=>s.trim()).filter(Boolean),cfg={collisions:[]};let event='start',target='';for(const line of lines){let m;if((m=line.match(/^when collided with\s+(.+)$/i))){event='collision';target=m[1];continue}if((m=line.match(/^when game starts$/i))){event='start';continue}const cmd={event,target,line};cfg.collisions.push(cmd);if(event==='start'){if((m=line.match(/^speed\s+([\d.]+)/i)))o.speed=Number(m[1]);if((m=line.match(/^damage\s+([\d.]+)/i)))o.damage=Number(m[1]);if((m=line.match(/^health\s+([\d.]+)/i)))o.health=Number(m[1]);if((m=line.match(/^follow\s+(.+)/i)))o.followTarget=m[1]}}return cfg}
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}function moveTop(o,dx,dy,obs){o.x+=dx;for(const s of obs)if(s.id!==o.id&&hit(o,s))o.x=dx>0?s.x-o.w:s.x+s.w;o.y+=dy;for(const s of obs)if(s.id!==o.id&&hit(o,s))o.y=dy>0?s.y-o.h:s.y+s.h}
 function scheduleGameFrame(g){requestAnimationFrame(t=>{if(game===g)loop(t)})}
-function startGame(id,preserveRun=false){if(!preserveRun)runState={inventory:{},hotbar:[],equipped:null};roomId=id||roomId;render();workspace.classList.add('playing');$('playLayer').classList.remove('hidden');$('mode').textContent='PLAY MODE';const c=$('canvas'),ctx=c.getContext('2d'),r=workspace.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);const O=clone(room().objects);O.forEach(o=>o._script=parseScript(o));const sp=O.find(o=>o.behavior==='spawn');let pl=O.find(o=>o.type==='being'&&o.beingRole==='player')||O.find(o=>o.behavior==='player')||{id:'p',type:'being',beingRole:'player',name:'Player',x:50,y:50,w:42,h:42,color:'#278cff',speed:220,behavior:'player',health:100,damage:0,cooldown:.5,layer:'world'};if(!O.includes(pl))O.push(pl);if(sp){pl.x=sp.x;pl.y=sp.y}if(!runState)runState={inventory:{},hotbar:[],equipped:null};
+function startGame(id,preserveRun=false){
+if(!preserveRun)runState={inventory:{},hotbar:[],equipped:null,collectedByRoom:{}};
+roomId=id||roomId;render();workspace.classList.add('playing');$('playLayer').classList.remove('hidden');$('mode').textContent='PLAY MODE';
+const c=$('canvas'),ctx=c.getContext('2d'),r=workspace.getBoundingClientRect(),d=devicePixelRatio||1;
+c.width=r.width*d;c.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);
+const O=clone(room().objects);O.forEach(o=>o._script=parseScript(o));
+if(!runState)runState={inventory:{},hotbar:[],equipped:null,collectedByRoom:{}};
+runState.collectedByRoom??={};
+const alreadyCollected=new Set(runState.collectedByRoom[roomId]||[]);
+for(const o of O)if(o.type==='item'&&alreadyCollected.has(o.id))o.collected=1;
+const sp=O.find(o=>o.behavior==='spawn');
+let pl=O.find(o=>o.type==='being'&&o.beingRole==='player')||O.find(o=>o.behavior==='player')||{id:'p',type:'being',beingRole:'player',name:'Player',x:50,y:50,w:42,h:42,color:'#278cff',speed:220,behavior:'player',health:100,damage:0,cooldown:.5,layer:'world'};
+if(!O.includes(pl))O.push(pl);if(sp){pl.x=sp.x;pl.y=sp.y}
 game={ctx,w:r.width,h:r.height,O,pl,keys:{},got:0,total:O.filter(o=>o.behavior==='coin').length,last:performance.now(),damageTimes:{},vy:0,onGround:false,currentRoom:roomId,
 inventory:runState.inventory,
 hotbar:runState.hotbar,
@@ -143,7 +155,8 @@ equipped:runState.equipped,
 projectiles:[],
 lastShotAt:0,
 aimX:null,
-aimY:null};buildRuntimeButtons();if(window.renderRuntimeHotbar)window.renderRuntimeHotbar(game);scheduleGameFrame(g)}
+aimY:null};
+buildRuntimeButtons();if(window.renderRuntimeHotbar)window.renderRuntimeHotbar(game);scheduleGameFrame(game)}
 function buildRuntimeButtons(){const box=$('playButtons');box.innerHTML='';for(const o of game.O.filter(o=>o.type==='button'&&o.layer==='ui')){const b=document.createElement('button');b.className='runtimeButton';b.textContent=o.text||o.name;b.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;background:${o.color}`;b.onclick=()=>{if(o.action==='goto'&&o.targetRoom){game=null;startGame(o.targetRoom,true)}else if(o.action==='restart'){const id=game.currentRoom;game=null;startGame(id,true)}};box.appendChild(b)}}
 function stopGame(){game=null;runState=null;workspace.classList.remove('playing');$('playLayer').classList.add('hidden');$('mode').textContent='BUILD MODE';$('playButtons').innerHTML='';$('runtimeHotbar')?.classList.add('hidden')}$('play').onclick=()=>{if(!game)startGame(roomId,false)};$('stop').onclick=stopGame;function kd(e){if(game)game.keys[e.key.toLowerCase()]=1}function ku(e){if(game)game.keys[e.key.toLowerCase()]=0}addEventListener('keydown',kd);addEventListener('keyup',ku);
 function applyCollisionScript(owner,other){for(const cmd of owner._script?.collisions||[]){if(cmd.event!=='collision')continue;if(cmd.target.toLowerCase()!==other.name.toLowerCase()&&cmd.target.toLowerCase()!==other.id.toLowerCase()&&cmd.target.toLowerCase()!==other.type.toLowerCase())continue;let m;if((m=cmd.line.match(/^take damage\s+([\d.]+)/i)))owner.health-=Number(m[1]);if(/^destroy self$/i.test(cmd.line))owner.destroyed=true;if((m=cmd.line.match(/^go to room\s+(.+)/i))){const rr=p.rooms.find(r=>r.name.toLowerCase()===m[1].toLowerCase()||r.id===m[1]);if(rr){game=null;startGame(rr.id,true)}}}}
@@ -163,7 +176,14 @@ for(const item of g.O.filter(o=>o.type==='item'&&!o.collected&&!o.destroyed&&o.a
    g.hotbar.push(hotbarItem);
   }
   if(item.equipOnPickup!==false||!g.equipped)g.equipped=itemId;
-  runState={inventory:g.inventory,hotbar:g.hotbar,equipped:g.equipped};
+  runState??={inventory:{},hotbar:[],equipped:null,collectedByRoom:{}};
+  runState.inventory=g.inventory;
+  runState.hotbar=g.hotbar;
+  runState.equipped=g.equipped;
+  runState.collectedByRoom??={};
+  const collectedHere=new Set(runState.collectedByRoom[g.currentRoom]||[]);
+  collectedHere.add(item.id);
+  runState.collectedByRoom[g.currentRoom]=[...collectedHere];
   if(window.renderRuntimeHotbar)window.renderRuntimeHotbar(g);
   status(itemId+(g.equipped===itemId?' picked up and equipped.':' picked up.'));
  }
