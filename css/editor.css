@@ -82,3 +82,14 @@
 .hotbarSlot span{position:absolute;left:5px;top:3px;font-size:10px;opacity:.65}
 .hotbarSlot strong{max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hotbarSlot small{opacity:.7}
+
+.v07Message{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:20000;
+background:#07111fe8;color:white;border:1px solid #ffffff2c;border-radius:9px;padding:8px 12px;
+pointer-events:none;backdrop-filter:blur(6px)}
+.v07Hotbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;gap:6px;
+z-index:20000;padding:7px;background:#07101ddd;border:1px solid #ffffff2b;border-radius:12px}
+.v07AimPad{position:fixed;right:24px;bottom:92px;width:130px;height:130px;border-radius:50%;
+border:2px solid #ffffff3d;background:#07101d9c;z-index:20000;touch-action:none;display:flex;
+align-items:center;justify-content:center}
+.v07AimPad span{position:absolute;bottom:-24px;color:#ffffffb0;font-size:11px}
+.v07AimKnob{width:48px;height:48px;border-radius:50%;background:#58eaffaa;border:2px solid #bffaff}
