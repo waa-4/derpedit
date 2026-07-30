@@ -1,23 +1,23 @@
-DERPEDIT v0.6.1 — ITEM PICKUP FIX
+DERPEDIT v0.6.2 — PLAY MODE & HTML FIX
+
+The previous ZIP had a mismatch between the JavaScript and index.html:
+- JavaScript expected an element named runtimeHotbar, but the HTML did not contain it.
+- JavaScript looked for playCanvas, while the actual canvas ID is canvas.
+- This caused Play Mode to stop during startup.
 
 Fixed:
-- A Player Being touching an Item now picks it up.
-- The Item appears in the runtime hotbar immediately.
-- "Equip when picked up" now selects it immediately.
-- The score display shows the currently equipped Item.
-- Hotbar inventory remains available when changing Rooms.
-- Inventory and equipped Item are stored with project autosave.
+- Added the real runtime hotbar element to index.html.
+- Connected weapon input and projectile drawing to the correct canvas.
+- Added safety checks so a missing hotbar cannot break the whole engine.
+- Updated the actual startGame and loop function bindings used by the Play button.
+- Stabilized projectile frame timing.
+- Item pickup, equipping, hotbar selection, Room persistence, and shooting remain included.
 
-How to test:
-1. Add a Being and set Being Type to Player.
-2. Add an Item near the Player.
-3. Set an Item ID, such as Blaster.
-4. Enable Pickup by touching.
-5. Enable Equip when picked up.
-6. Enter Play Mode and walk into the Item.
-7. The Item should disappear from the Room, appear in the hotbar, and become highlighted.
-
-For a weapon:
-- Enable Usable / weapon.
-- Set Weapon Type to Ranged projectile.
-- Fire with Space or by clicking/tapping the play area.
+Test:
+1. Open this ZIP's index.html—not an index.html copied from an older version.
+2. Add or select a Game Room.
+3. Add a Player Being and an Item.
+4. Enable Pickup by touching and Equip when picked up.
+5. Press Play.
+6. Touch the Item. It should enter and highlight in the hotbar.
+7. For ranged Items, fire with Space or click/tap the game canvas.

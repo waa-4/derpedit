@@ -27,6 +27,7 @@
 
   function renderHotbar(g){
     const box=q('runtimeHotbar');
+    if(!box)return;
     if(!g||!g.hotbar?.length){box.classList.add('hidden');box.innerHTML='';return}
     box.classList.remove('hidden');box.innerHTML='';
     g.hotbar.slice(0,9).forEach((item,index)=>{
@@ -110,17 +111,19 @@
     }
     if(e.code==='Space'){e.preventDefault();shoot(game)}
   });
-  q('playCanvas')?.addEventListener('pointerdown',()=>{if(game)shoot(game)});
+  q('canvas')?.addEventListener('pointerdown',()=>{if(game)shoot(game)});
 
   // Patch room changes so the same hotbar and equipped item survive.
-  const originalStart=window.startGame;
-  window.startGame=function(id){
+  const originalStart=startGame;
+  startGame=function(id){
     // Preserve current run state before changing Rooms.
     if(game){
+      p.runtimeInventory??={inventory:{},hotbar:[],equipped:null};
       p.runtimeInventory.inventory=game.inventory||p.runtimeInventory.inventory;
       p.runtimeInventory.hotbar=game.hotbar||p.runtimeInventory.hotbar;
       p.runtimeInventory.equipped=game.equipped||p.runtimeInventory.equipped;
     }
+    p.runtimeInventory??={inventory:{},hotbar:[],equipped:null};
     originalStart(id);
     if(game){
       game.inventory=p.runtimeInventory.inventory;
@@ -132,17 +135,18 @@
   };
 
   // Wrap loop: update projectiles before the normal draw, then draw them after.
-  const originalLoop=window.loop;
-  window.loop=function(t){
+  const originalLoop=loop;
+  loop=function(t){
     if(game){
       const now=performance.now();
-      const dt=Math.min(.05,((game._weaponLastTime||now)-now)*-0.001||0);
+      const previous=game._weaponLastTime||now;
+      const dt=Math.min(.05,Math.max(0,(now-previous)/1000));
       game._weaponLastTime=now;
       updateProjectiles(game,dt,now);
     }
     originalLoop(t);
     if(game){
-      const canvas=q('playCanvas');
+      const canvas=q('canvas');
       const ctx=canvas?.getContext('2d');
       if(ctx)drawProjectiles(game,ctx);
       renderHotbar(game);
@@ -150,5 +154,5 @@
   };
 
   // Ensure stopping play hides the hotbar.
-  q('stop')?.addEventListener('click',()=>q('runtimeHotbar').classList.add('hidden'));
+  q('stop')?.addEventListener('click',()=>q('runtimeHotbar')?.classList.add('hidden'));
 })();
