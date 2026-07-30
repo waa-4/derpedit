@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v0.4.3</title>
+<title>Derpedit v0.4.4</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.4.3 — Being System</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.4.4 — Editor Camera</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Parts</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Assets</button><button data-tab="toolbox">Toolbox</button></div>
@@ -28,7 +28,7 @@
 <div id="assets" class="assetList section"></div><h2>MUSIC</h2><div id="musicAssets" class="assetList"></div><p class="muted">Select an image asset, then apply it to a Part. Music can be assigned per Room.</p></div>
 <div id="tab-toolbox" class="hidden"><h2>PERSONAL TOOLBOX</h2><div class="toolboxActions"><button id="refreshToolbox">Refresh</button><button id="clearToolbox" class="danger">Clear Toolbox</button></div><div id="toolboxList" class="assetList section"></div><p class="muted">Toolbox assets are saved in this browser and can be imported into any Derpedit project.</p></div>
 </aside>
-<section class="workspaceWrap"><div class="bar"><strong id="mode">BUILD MODE</strong><label><input id="snap" type="checkbox" checked> Grid snap</label><span id="roomLabel"></span><span id="status">Ready.</span></div><div class="workspace" id="workspace"><div class="grid" id="grid"></div><div id="layer"></div><div class="playLayer hidden" id="playLayer"><div class="hud"><span id="score">Health: 100</span><button id="stop">■ Stop</button></div><canvas id="canvas"></canvas><div id="playButtons" class="playButtons"></div></div></div></section>
+<section class="workspaceWrap"><div class="bar"><strong id="mode">BUILD MODE</strong><label><input id="snap" type="checkbox" checked> Grid snap</label><span id="roomLabel"></span><span id="status">Ready.</span></div><div id="editorCameraReadout" class="muted small">Zoom 100%</div><div class="workspace" id="workspace"><div class="grid" id="grid"></div><div id="layer"></div><div class="playLayer hidden" id="playLayer"><div class="hud"><span id="score">Health: 100</span><button id="stop">■ Stop</button></div><canvas id="canvas"></canvas><div id="playButtons" class="playButtons"></div></div></div></section>
 <aside class="panel right"><h2>PART PROPERTIES</h2><div id="none" class="muted">Select a Part to edit it.</div><div id="props" class="props hidden">
 <label>Name / ID<input id="name"></label><div class="two"><label>X<input id="x" type="number"></label><label>Y<input id="y" type="number"></label></div><div class="two"><label>Width<input id="w" type="number" min="8"></label><label>Height<input id="h" type="number" min="8"></label></div><label>Rotation<input id="rot" type="number"></label><label>Color<input id="color" type="color"></label><label>Space<select id="partLayer"><option value="world">World</option><option value="ui">UI</option></select></label>
 <div class="two"><label>Render Layer<input id="renderLayer" type="number" value="0"></label><label>Opacity %<input id="opacity" type="number" min="0" max="100" value="100"></label></div>
@@ -64,6 +64,7 @@
 <script src="js/derpyscript.js"></script>
 <script src="js/app.js"></script>
 <script src="js/toolbox.js"></script>
+<script src="js/editor-camera.js"></script>
 <script src="js/v04.js"></script>
 </body>
 </html>

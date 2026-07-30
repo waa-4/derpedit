@@ -1,20 +1,14 @@
-DERPEDIT v0.4.3 — BEING SYSTEM
+DERPEDIT v0.4.4 — EDITOR CAMERA
 
-Main change:
-- Player and Enemy are no longer separate palette Parts.
-- Add one Being, then choose its Being Type:
-  - Player
-  - Enemy
-  - Neutral / NPC
+New editor controls:
+- Hold right mouse button on empty editor background and drag to pan the editor camera.
+- Use the mouse wheel over the editor to zoom in and out.
+- Zoom centers around the mouse pointer.
+- Zoom range: 25% to 400%.
+- The camera controls are disabled during Play Mode.
 
-Runtime behavior:
-- The Player-controlled Being is used as the room player.
-- Enemy Beings chase and damage the Player.
-- Neutral Beings do not automatically fight or move.
-- Old Player and Enemy objects migrate automatically into Beings.
-
-Play-mode overlay protection:
-- The editor layer and grid are force-hidden while playing.
-- The runtime layer is forced above editor content.
+Existing v0.4.3 Being System:
+- Add a Being and toggle it between Player, Enemy, or Neutral / NPC.
+- Old Player and Enemy objects migrate into Beings automatically.
 
 Open index.html to run Derpedit.

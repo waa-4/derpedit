@@ -44,3 +44,10 @@
 .workspace.playing #grid{display:none!important}
 .workspace.playing #playLayer{display:block!important;z-index:999999!important}
 #beingFields.hidden{display:none!important}
+
+/* v0.4.4 editor camera */
+.workspace{overflow:hidden}
+.workspace.cameraDragging,
+.workspace.cameraDragging *{cursor:grabbing!important;user-select:none!important}
+#layer,#grid{will-change:transform}
+#editorCameraReadout{margin-left:8px;white-space:nowrap}
