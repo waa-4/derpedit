@@ -1,19 +1,114 @@
 
 const $=id=>document.getElementById(id),layer=$('layer'),workspace=$('workspace');
-const defs={being:{w:44,h:44,color:'#278cff',speed:240,behavior:'player',beingRole:'player',health:100,damage:10,cooldown:.5,name:'Being'},wall:{w:120,h:36,color:'#d8dee9',speed:0,behavior:'solid',health:9999,damage:0,cooldown:0,name:'Wall'},coin:{w:28,h:28,color:'#ffd33d',speed:0,behavior:'coin',health:1,damage:0,cooldown:0,name:'Coin'},damage:{w:90,h:28,color:'#ff355d',speed:0,behavior:'damage',health:9999,damage:25,cooldown:.5,name:'Damage Part'},text:{w:150,h:36,color:'#ffffff',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'World Text',text:'Hello, Derpedit!'},label:{w:180,h:42,color:'#ffffff',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Label',text:'Label',layer:'ui'},button:{w:180,h:52,color:'#246fbb',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Button',text:'START',layer:'ui',action:'goto'},healthbar:{w:220,h:24,color:'#42e36d',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Health Bar',layer:'ui'},spawn:{w:46,h:46,color:'#61efff',speed:0,behavior:'spawn',health:1,damage:0,cooldown:0,name:'Spawn'}};
+const defs={
+being:{w:44,h:44,color:'#278cff',speed:240,behavior:'player',beingRole:'player',health:100,damage:10,cooldown:.5,name:'Being'},
+basicblock:{w:96,h:48,color:'#8793a6',speed:0,behavior:'none',health:9999,damage:0,cooldown:0,name:'Basic Block',collision:false},
+collisionblock:{w:120,h:36,color:'#d8dee9',speed:0,behavior:'solid',health:9999,damage:0,cooldown:0,name:'Collision Block',collision:true},
+item:{w:30,h:30,color:'#ffd33d',speed:0,behavior:'item',health:1,damage:0,cooldown:0,name:'Item',collision:false},
+scriptobject:{w:56,h:56,color:'#8d5cff',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Script Object',collision:false},
+coin:{w:28,h:28,color:'#ffd33d',speed:0,behavior:'coin',health:1,damage:0,cooldown:0,name:'Coin',collision:false},
+damage:{w:90,h:28,color:'#ff355d',speed:0,behavior:'damage',health:9999,damage:25,cooldown:.5,name:'Damage Object'},
+text:{w:150,h:36,color:'#ffffff',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'World Text',text:'Hello, Derpedit!'},
+label:{w:180,h:42,color:'#ffffff',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Label',text:'Label',layer:'ui'},
+button:{w:180,h:52,color:'#246fbb',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Button',text:'START',layer:'ui',action:'goto'},
+healthbar:{w:220,h:24,color:'#42e36d',speed:0,behavior:'none',health:1,damage:0,cooldown:0,name:'Health Bar',layer:'ui'},
+spawn:{w:46,h:46,color:'#61efff',speed:0,behavior:'spawn',health:1,damage:0,cooldown:0,name:'Spawn',collision:false}
+};
 let p={version:'0.4',name:'My Derpedit Game',gameType:'topdown',background:'#202633',startRoom:'room1',music:[],rooms:[{id:'room1',name:'Main Menu',type:'menu',objects:[]},{id:'room2',name:'Level 1',type:'game',objects:[]}],assets:[]},roomId='room1',sel=null,hist=[],future=[],drag=null,resize=null,game=null,selectedAsset=null;
+
+const AUTOSAVE_KEY='derpedit.autosave.v051';
+let autosaveTimer=null;
+function persistProject(){
+  try{
+    localStorage.setItem(AUTOSAVE_KEY,JSON.stringify({
+      project:p,
+      roomId,
+      selectedId:sel,
+      savedAt:Date.now()
+    }));
+  }catch(err){console.warn('Derpedit autosave unavailable:',err)}
+}
+function queueAutosave(){
+  clearTimeout(autosaveTimer);
+  autosaveTimer=setTimeout(persistProject,120);
+}
+function restoreAutosave(){
+  try{
+    const raw=localStorage.getItem(AUTOSAVE_KEY);
+    if(!raw)return false;
+    const saved=JSON.parse(raw);
+    if(!saved?.project?.rooms)return false;
+    p=saved.project;
+    roomId=saved.roomId||p.startRoom||p.rooms[0]?.id;
+    sel=saved.selectedId||null;
+    normalize();
+    return true;
+  }catch(err){
+    console.warn('Could not restore Derpedit autosave:',err);
+    return false;
+  }
+}
 const clone=v=>JSON.parse(JSON.stringify(v)),uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36),room=()=>p.rooms.find(r=>r.id===roomId),selected=()=>room()?.objects.find(o=>o.id===sel),snap=v=>$('snap').checked?Math.round(v/24)*24:Math.round(v);
 function checkpoint(){hist.push(JSON.stringify(p));if(hist.length>70)hist.shift();future=[];buttons()}function buttons(){$('undo').disabled=!hist.length;$('redo').disabled=!future.length}function status(t){$('status').textContent=t}
 function normalize(){if(!p.rooms){p.rooms=[{id:'room1',name:'Level 1',type:'game',objects:p.objects||[]}];p.startRoom='room1';delete p.objects}p.assets=p.assets||[];p.music=p.music||[];p.gameType=p.gameType||'topdown';for(const r of p.rooms){r.cameraMode??='fixed';r.width??=1280;r.height??=720;r.infinite??=false;r.musicId??='';for(const o of r.objects){o.health??=100;o.damage??=0;o.cooldown??=.5;o.layer??='world';o.script??='';o.action??='none';o.targetRoom??='';o.opacity??=100;o.renderLayer??=0;o.physics??=false;o.gravity??=false;o.collision??=true;o.team??='Neutral';o.animations??={idle:'',walk:'',jump:'',fall:''};
 if(o.type==='player'){o.type='being';o.beingRole='player';o.behavior='player';}
 if(o.type==='enemy'){o.type='being';o.beingRole='enemy';o.behavior='chase';}
-if(o.type==='being'){o.beingRole??=(o.behavior==='chase'?'enemy':o.behavior==='player'?'player':'neutral');}}}}
-function add(type){checkpoint();const d=defs[type],r=room(),n=r.objects.filter(o=>o.type===type).length+1,o={id:uid(),type,name:d.name+(n>1?' '+n:''),x:snap(90+n*18),y:snap(80+n*18),w:d.w,h:d.h,rotation:0,color:d.color,speed:d.speed,behavior:d.behavior,health:d.health,damage:d.damage,cooldown:d.cooldown,text:d.text||'',layer:d.layer||'world',action:d.action||'none',targetRoom:p.rooms.find(q=>q.id!==roomId)?.id||'',script:'',assetId:null,opacity:100,renderLayer:0,physics:false,gravity:false,collision:true,team:'Neutral',animations:{idle:'',walk:'',jump:'',fall:''},beingRole:type==='being'?'player':undefined};r.objects.push(o);sel=o.id;render()}
-function render(){normalize();p.name=$('projectName').value||p.name;p.background=$('bg').value;p.gameType=$('gameType').value;workspace.style.background=p.background;$('roomLabel').textContent=room()?.name||'';layer.innerHTML='';for(const o of [...room().objects].sort((a,b)=>(a.renderLayer||0)-(b.renderLayer||0))){const e=document.createElement('div');e.className='obj '+o.type+(o.id===sel?' sel':'');e.dataset.id=o.id;e.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;background:${o.color};transform:rotate(${o.rotation}deg);opacity:${(o.opacity??100)/100};z-index:${100+(o.renderLayer||0)};`;const asset=p.assets.find(a=>a.id===o.assetId);if(asset){e.style.backgroundImage=`url(${asset.data})`;e.style.backgroundSize='100% 100%';e.style.imageRendering='pixelated'}e.textContent=['text','label','button'].includes(o.type)?(o.text||o.name):o.type==='spawn'?'SPAWN':o.type==='healthbar'?'HEALTH':o.name;const lp=document.createElement('span');lp.className='layerPill';lp.textContent='L'+(o.renderLayer||0);e.appendChild(lp);if(o.layer==='ui'){const b=document.createElement('span');b.className='uiBadge';b.textContent='UI';e.appendChild(b)}if(o.id===sel){for(const c of ['nw','se']){const h=document.createElement('i');h.className='handle '+c;h.dataset.handle=c;h.onpointerdown=startResize;e.appendChild(h)}const g=document.createElement('i');g.className='centerGrip';g.onpointerdown=startDrag;e.appendChild(g)}e.onpointerdown=startDrag;e.onclick=ev=>{ev.stopPropagation();sel=o.id;render()};layer.appendChild(e)}renderScene();renderRooms();renderAssets();renderProps()}
+if(o.type==='wall'){o.type='collisionblock';o.name=o.name==='Wall'?'Collision Block':o.name;o.behavior='solid';o.collision=true;}
+if(o.type==='being'){o.beingRole??=(o.behavior==='chase'?'enemy':o.behavior==='player'?'player':'neutral');}
+if(o.type==='basicblock'){o.behavior??='none';o.collision??=false;}
+if(o.type==='collisionblock'){o.behavior='solid';o.collision=true;}
+if(o.type==='item'){o.behavior='item';o.collision??=false;o.itemId??=o.name||'Item';o.stackSize??=1;o.pickupAmount??=1;o.autoPickup??=true;o.itemDescription??='';}
+if(o.type==='scriptobject'){o.behavior='none';o.collision=false;o.physics=false;}}}}
+function add(type){
+  const d=defs[type];
+  if(!d){alert('This Object type is not available: '+type);return}
+  const r=room();
+  if(!r){alert('Create or select a Room first.');return}
+  checkpoint();
+  const n=r.objects.filter(o=>o.type===type).length+1;
+  const o={
+    id:uid(),type,
+    name:d.name+(n>1?' '+n:''),
+    x:snap(90+n*18),y:snap(80+n*18),
+    w:d.w,h:d.h,rotation:0,color:d.color,
+    speed:d.speed,behavior:d.behavior,
+    health:d.health,damage:d.damage,cooldown:d.cooldown,
+    text:d.text||'',layer:d.layer||'world',
+    action:d.action||'none',
+    targetRoom:p.rooms.find(q=>q.id!==roomId)?.id||'',
+    script:'',assetId:null,opacity:100,renderLayer:0,
+    physics:false,gravity:false,
+    collision:d.collision!==undefined?d.collision:true,
+    team:'Neutral',
+    animations:{idle:'',walk:'',jump:'',fall:''},
+    beingRole:type==='being'?'player':undefined,
+    itemId:type==='item'?'Item':undefined,
+    stackSize:type==='item'?1:undefined,
+    pickupAmount:type==='item'?1:undefined,
+    autoPickup:type==='item'?true:undefined,
+    itemDescription:type==='item'?'':undefined
+  };
+  if(type==='being')o.team='Player';
+  if(type==='scriptobject')o.opacity=75;
+  r.objects.push(o);
+  sel=o.id;
+  render();
+  status(o.name+' inserted.');
+}
+function render(){normalize();p.name=$('projectName').value||p.name;p.background=$('bg').value;p.gameType=$('gameType').value;workspace.style.background=p.background;$('roomLabel').textContent=room()?.name||'';layer.innerHTML='';for(const o of [...room().objects].sort((a,b)=>(a.renderLayer||0)-(b.renderLayer||0))){const e=document.createElement('div');e.className='obj '+o.type+(o.id===sel?' sel':'');e.dataset.id=o.id;e.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;background:${o.color};transform:rotate(${o.rotation}deg);opacity:${(o.opacity??100)/100};z-index:${100+(o.renderLayer||0)};`;const asset=p.assets.find(a=>a.id===o.assetId);if(asset){e.style.backgroundImage=`url(${asset.data})`;e.style.backgroundSize='100% 100%';e.style.imageRendering='pixelated'}e.textContent=['text','label','button'].includes(o.type)?(o.text||o.name):o.type==='spawn'?'SPAWN':o.type==='healthbar'?'HEALTH':o.name;const lp=document.createElement('span');lp.className='layerPill';lp.textContent='L'+(o.renderLayer||0);e.appendChild(lp);if(o.layer==='ui'){const b=document.createElement('span');b.className='uiBadge';b.textContent='UI';e.appendChild(b)}if(o.id===sel){for(const c of ['nw','se']){const h=document.createElement('i');h.className='handle '+c;h.dataset.handle=c;h.onpointerdown=startResize;e.appendChild(h)}const g=document.createElement('i');g.className='centerGrip';g.onpointerdown=startDrag;e.appendChild(g)}e.onpointerdown=startDrag;e.onclick=ev=>{ev.stopPropagation();sel=o.id;render()};layer.appendChild(e)}renderScene();renderRooms();renderAssets();renderProps();queueAutosave();}
 function renderScene(){const s=$('scene');s.innerHTML='';for(const o of room().objects){const b=document.createElement('button');b.textContent=(o.layer==='ui'?'UI ':'')+o.type.toUpperCase()+' — '+o.name;b.className=o.id===sel?'sel':'';b.onclick=()=>{sel=o.id;render()};s.appendChild(b)}if(!room().objects.length)s.innerHTML='<div class="muted">No Parts yet.</div>'}
 function renderRooms(){const x=$('rooms');x.innerHTML='';for(const r of p.rooms){const b=document.createElement('button');b.textContent=(r.type==='menu'?'☰ ':'▣ ')+r.name;b.className=r.id===roomId?'sel':'';b.onclick=()=>{roomId=r.id;sel=null;render()};x.appendChild(b)}const r=room();$('roomName').value=r?.name||'';$('roomType').value=r?.type||'game'}
 function renderAssets(){const x=$('assets');x.innerHTML='';for(const a of p.assets){const b=document.createElement('button');b.textContent='🎨 '+a.name;b.className=a.id===selectedAsset?'sel':'';b.onclick=()=>{selectedAsset=a.id;renderAssets()};x.appendChild(b)}if(!p.assets.length)x.innerHTML='<div class="muted">No assets yet.</div>'}
-function renderProps(){const o=selected();$('none').classList.toggle('hidden',!!o);$('props').classList.toggle('hidden',!o);if(!o)return;const map=[['name','name'],['x','x'],['y','y'],['w','w'],['h','h'],['rot','rotation'],['color','color'],['speed','speed'],['behavior','behavior'],['health','health'],['damage','damage'],['cooldown','cooldown'],['text','text'],['partLayer','layer'],['action','action'],['script','script'],['renderLayer','renderLayer'],['opacity','opacity'],['team','team']];for(const [id,key] of map)$(id).value=o[key]??'';$('textWrap').classList.toggle('hidden',!['text','label','button'].includes(o.type));$('beingFields').classList.toggle('hidden',o.type!=='being');$('beingRole').value=o.beingRole||'player';$('buttonFields').classList.toggle('hidden',o.type!=='button');$('combatFields').classList.toggle('hidden',['button','label','text','healthbar'].includes(o.type));const tr=$('targetRoom');tr.innerHTML=p.rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');tr.value=o.targetRoom||'';
+function renderProps(){const o=selected();$('none').classList.toggle('hidden',!!o);$('props').classList.toggle('hidden',!o);if(!o)return;const map=[['name','name'],['x','x'],['y','y'],['w','w'],['h','h'],['rot','rotation'],['color','color'],['speed','speed'],['behavior','behavior'],['health','health'],['damage','damage'],['cooldown','cooldown'],['text','text'],['partLayer','layer'],['action','action'],['script','script'],['renderLayer','renderLayer'],['opacity','opacity'],['team','team']];for(const [id,key] of map)$(id).value=o[key]??'';$('textWrap').classList.toggle('hidden',!['text','label','button'].includes(o.type));$('beingFields').classList.toggle('hidden',o.type!=='being');$('beingRole').value=o.beingRole||'player';
+$('itemFields').classList.toggle('hidden',o.type!=='item');
+$('scriptObjectFields').classList.toggle('hidden',o.type!=='scriptobject');
+if(o.type==='item'){
+ $('itemId').value=o.itemId||o.name||'Item';
+ $('stackSize').value=o.stackSize||1;
+ $('pickupAmount').value=o.pickupAmount||1;
+ $('autoPickup').checked=o.autoPickup!==false;
+ $('itemDescription').value=o.itemDescription||'';
+}$('buttonFields').classList.toggle('hidden',o.type!=='button');$('combatFields').classList.toggle('hidden',['button','label','text','healthbar','item','scriptobject','basicblock','collisionblock'].includes(o.type));const tr=$('targetRoom');tr.innerHTML=p.rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');tr.value=o.targetRoom||'';
 $('physics').checked=!!o.physics;$('gravity').checked=!!o.gravity;$('collision').checked=o.collision!==false;
 for(const [id,key] of [['animIdle','idle'],['animWalk','walk'],['animJump','jump'],['animFall','fall']]){const el=$(id);el.innerHTML='<option value="">None</option>'+p.assets.filter(a=>a.kind!=='music').map(a=>`<option value="${a.id}">${a.name}</option>`).join('');el.value=o.animations?.[key]||''}
 }
@@ -25,7 +120,7 @@ function del(){if(!selected())return;checkpoint();room().objects=room().objects.
 $('del').onclick=del;$('dup').onclick=dup;addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='Delete')del();if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click()}});
 $('undo').onclick=()=>{if(!hist.length)return;future.push(JSON.stringify(p));p=JSON.parse(hist.pop());normalize();roomId=p.rooms.some(r=>r.id===roomId)?roomId:p.rooms[0].id;sel=null;sync();render();buttons()};$('redo').onclick=()=>{if(!future.length)return;hist.push(JSON.stringify(p));p=JSON.parse(future.pop());normalize();roomId=p.rooms[0].id;sel=null;sync();render();buttons()};
 function sync(){$('projectName').value=p.name||'My Derpedit Game';$('bg').value=p.background||'#202633';$('gameType').value=p.gameType||'topdown'}function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('save').onclick=()=>download((p.name||'Project').replace(/\W+/g,'-')+'.derpedit',JSON.stringify(p,null,2),'application/json');$('load').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{try{checkpoint();p=JSON.parse(r.result);normalize();roomId=p.startRoom||p.rooms[0].id;sel=null;sync();render();status('Project loaded.')}catch(err){alert('Could not load: '+err.message)}};r.readAsText(f)};
+$('save').onclick=()=>{persistProject();download((p.name||'Project').replace(/\W+/g,'-')+'.derpedit',JSON.stringify(p,null,2),'application/json')};$('load').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{try{checkpoint();p=JSON.parse(r.result);normalize();roomId=p.startRoom||p.rooms[0].id;sel=null;sync();render();persistProject();status('Project loaded and autosaved.')}catch(err){alert('Could not load: '+err.message)}};r.readAsText(f)};
 $('new').onclick=()=>{if(confirm('Start a new project?')){checkpoint();p={version:'0.4',name:'My Derpedit Game',gameType:'topdown',background:'#202633',startRoom:'room1',music:[],rooms:[{id:'room1',name:'Main Menu',type:'menu',objects:[]},{id:'room2',name:'Level 1',type:'game',objects:[]}],assets:[]};roomId='room1';sel=null;sync();render()}};
 $('addRoom').onclick=()=>{checkpoint();const id=uid(),r={id,name:'Room '+(p.rooms.length+1),type:'game',objects:[]};p.rooms.push(r);roomId=id;sel=null;render()};$('addMenu').onclick=()=>{checkpoint();const id=uid(),r={id,name:'Menu '+(p.rooms.length+1),type:'menu',objects:[]};p.rooms.push(r);roomId=id;sel=null;render();add('label');selected().text='MY GAME';add('button');selected().text='START';selected().targetRoom=p.rooms.find(q=>q.type==='game')?.id||'';render()};$('deleteRoom').onclick=()=>{if(p.rooms.length<=1)return alert('A project needs at least one Room.');if(confirm('Delete this Room?')){checkpoint();p.rooms=p.rooms.filter(r=>r.id!==roomId);roomId=p.rooms[0].id;sel=null;render()}};$('roomName').onchange=()=>{checkpoint();room().name=$('roomName').value||'Room';render()};$('roomType').onchange=()=>{checkpoint();room().type=$('roomType').value;render()};
 function parseScript(o){const lines=(o.script||'').split(/\n/).map(s=>s.trim()).filter(Boolean),cfg={collisions:[]};let event='start',target='';for(const line of lines){let m;if((m=line.match(/^when collided with\s+(.+)$/i))){event='collision';target=m[1];continue}if((m=line.match(/^when game starts$/i))){event='start';continue}const cmd={event,target,line};cfg.collisions.push(cmd);if(event==='start'){if((m=line.match(/^speed\s+([\d.]+)/i)))o.speed=Number(m[1]);if((m=line.match(/^damage\s+([\d.]+)/i)))o.damage=Number(m[1]);if((m=line.match(/^health\s+([\d.]+)/i)))o.health=Number(m[1]);if((m=line.match(/^follow\s+(.+)/i)))o.followTarget=m[1]}}return cfg}
@@ -34,13 +129,29 @@ function startGame(id){roomId=id||roomId;render();workspace.classList.add('playi
 function buildRuntimeButtons(){const box=$('playButtons');box.innerHTML='';for(const o of game.O.filter(o=>o.type==='button'&&o.layer==='ui')){const b=document.createElement('button');b.className='runtimeButton';b.textContent=o.text||o.name;b.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;background:${o.color}`;b.onclick=()=>{if(o.action==='goto'&&o.targetRoom){stopGame();startGame(o.targetRoom)}else if(o.action==='restart'){const id=game.currentRoom;stopGame();startGame(id)}};box.appendChild(b)}}
 function stopGame(){game=null;workspace.classList.remove('playing');$('playLayer').classList.add('hidden');$('mode').textContent='BUILD MODE';$('playButtons').innerHTML=''}$('play').onclick=()=>{if(!game)startGame(roomId)};$('stop').onclick=stopGame;function kd(e){if(game)game.keys[e.key.toLowerCase()]=1}function ku(e){if(game)game.keys[e.key.toLowerCase()]=0}addEventListener('keydown',kd);addEventListener('keyup',ku);
 function applyCollisionScript(owner,other){for(const cmd of owner._script?.collisions||[]){if(cmd.event!=='collision')continue;if(cmd.target.toLowerCase()!==other.name.toLowerCase()&&cmd.target.toLowerCase()!==other.id.toLowerCase()&&cmd.target.toLowerCase()!==other.type.toLowerCase())continue;let m;if((m=cmd.line.match(/^take damage\s+([\d.]+)/i)))owner.health-=Number(m[1]);if(/^destroy self$/i.test(cmd.line))owner.destroyed=true;if((m=cmd.line.match(/^go to room\s+(.+)/i))){const rr=p.rooms.find(r=>r.name.toLowerCase()===m[1].toLowerCase()||r.id===m[1]);if(rr){stopGame();startGame(rr.id)}}}}
-function loop(t){if(!game)return;const g=game,dt=Math.min(.033,(t-g.last)/1000);g.last=t,solid=g.O.filter(o=>o.behavior==='solid'&&!o.destroyed);let dx=(g.keys.d||g.keys.arrowright?1:0)-(g.keys.a||g.keys.arrowleft?1:0),dy=(g.keys.s||g.keys.arrowdown?1:0)-(g.keys.w||g.keys.arrowup?1:0);if(p.gameType==='platformer'){g.vy+=900*dt;if((g.keys.w||g.keys.arrowup||g.keys[' '])&&g.onGround){g.vy=-420;g.onGround=false}g.pl.x+=dx*g.pl.speed*dt;for(const s of solid)if(hit(g.pl,s))g.pl.x=dx>0?s.x-g.pl.w:s.x+s.w;g.pl.y+=g.vy*dt;g.onGround=false;for(const s of solid)if(hit(g.pl,s)){if(g.vy>0){g.pl.y=s.y-g.pl.h;g.onGround=true}else g.pl.y=s.y+s.h;g.vy=0}}else{const l=Math.hypot(dx,dy)||1;moveTop(g.pl,dx/l*g.pl.speed*dt,dy/l*g.pl.speed*dt,solid)}g.pl.x=Math.max(0,Math.min(g.w-g.pl.w,g.pl.x));if(g.pl.y>g.h+100)g.pl.health=0;
+function loop(t){if(!game)return;const g=game,dt=Math.min(.033,(t-g.last)/1000);g.last=t,solid=g.O.filter(o=>(o.type==='collisionblock'||o.behavior==='solid')&&!o.destroyed);let dx=(g.keys.d||g.keys.arrowright?1:0)-(g.keys.a||g.keys.arrowleft?1:0),dy=(g.keys.s||g.keys.arrowdown?1:0)-(g.keys.w||g.keys.arrowup?1:0);if(p.gameType==='platformer'){g.vy+=900*dt;if((g.keys.w||g.keys.arrowup||g.keys[' '])&&g.onGround){g.vy=-420;g.onGround=false}g.pl.x+=dx*g.pl.speed*dt;for(const s of solid)if(hit(g.pl,s))g.pl.x=dx>0?s.x-g.pl.w:s.x+s.w;g.pl.y+=g.vy*dt;g.onGround=false;for(const s of solid)if(hit(g.pl,s)){if(g.vy>0){g.pl.y=s.y-g.pl.h;g.onGround=true}else g.pl.y=s.y+s.h;g.vy=0}}else{const l=Math.hypot(dx,dy)||1;moveTop(g.pl,dx/l*g.pl.speed*dt,dy/l*g.pl.speed*dt,solid)}g.pl.x=Math.max(0,Math.min(g.w-g.pl.w,g.pl.x));if(g.pl.y>g.h+100)g.pl.health=0;
 for(const e of g.O.filter(o=>((o.type==='being'&&o.beingRole==='enemy')||o.behavior==='chase')&&!o.destroyed)){let vx=g.pl.x-e.x,vy=g.pl.y-e.y,z=Math.hypot(vx,vy)||1;if(p.gameType==='platformer')moveTop(e,Math.sign(vx)*e.speed*dt,0,solid);else moveTop(e,vx/z*e.speed*dt,vy/z*e.speed*dt,solid)}
 for(const q of g.O.filter(o=>o.behavior==='coin'&&!o.collected&&!o.destroyed))if(hit(g.pl,q)){q.collected=1;g.got++}
 for(const d of g.O.filter(o=>(o.behavior==='damage'||o.behavior==='chase')&&!o.destroyed)){if(hit(g.pl,d)){const key=d.id,now=performance.now();if(now-(g.damageTimes[key]||0)>(d.cooldown||.5)*1000){g.pl.health-=d.damage||10;g.damageTimes[key]=now;applyCollisionScript(d,g.pl);applyCollisionScript(g.pl,d)}}}
-for(const a of g.O)for(const b of g.O)if(a!==b&&!a.destroyed&&!b.destroyed&&hit(a,b))applyCollisionScript(a,b);g.O=g.O.filter(o=>!o.destroyed);$('score').textContent=`Health: ${Math.max(0,Math.ceil(g.pl.health))} | Coins: ${g.got}/${g.total}`;g.ctx.fillStyle=p.background;g.ctx.fillRect(0,0,g.w,g.h);for(const o of g.O){if(o.layer==='ui'||o.behavior==='spawn'||o.collected||o.destroyed||o.type==='button')continue;g.ctx.save();g.ctx.translate(o.x+o.w/2,o.y+o.h/2);g.ctx.rotate((o.rotation||0)*Math.PI/180);const a=p.assets.find(a=>a.id===o.assetId);if(a){const im=new Image();im.src=a.data;g.ctx.imageSmoothingEnabled=false;g.ctx.drawImage(im,-o.w/2,-o.h/2,o.w,o.h)}else{g.ctx.fillStyle=o.type==='being'?(o.beingRole==='enemy'?'#e3424f':o.beingRole==='neutral'?'#9b8cff':o.color):o.color;if(['being','player','enemy','coin'].includes(o.type)){g.ctx.beginPath();g.ctx.ellipse(0,0,o.w/2,o.h/2,0,0,7);g.ctx.fill()}else if(['text','label'].includes(o.type)){g.ctx.font='20px system-ui';g.ctx.textAlign='center';g.ctx.fillText(o.text||o.name,0,5)}else if(o.type==='healthbar'){g.ctx.fillStyle='#34131a';g.ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h);g.ctx.fillStyle=o.color;g.ctx.fillRect(-o.w/2,-o.h/2,o.w*Math.max(0,g.pl.health/100),o.h)}else g.ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h)}g.ctx.restore()}for(const o of g.O.filter(o=>o.layer==='ui'&&o.type!=='button')){g.ctx.fillStyle=o.color;if(o.type==='healthbar'){g.ctx.fillStyle='#34131a';g.ctx.fillRect(o.x,o.y,o.w,o.h);g.ctx.fillStyle=o.color;g.ctx.fillRect(o.x,o.y,o.w*Math.max(0,g.pl.health/100),o.h)}else{g.ctx.font='20px system-ui';g.ctx.fillText(o.text||o.name,o.x,o.y+20)}}if(g.pl.health<=0){g.ctx.fillStyle='#000b';g.ctx.fillRect(0,0,g.w,g.h);g.ctx.fillStyle='white';g.ctx.textAlign='center';g.ctx.font='bold 42px system-ui';g.ctx.fillText('GAME OVER',g.w/2,g.h/2)}requestAnimationFrame(loop)}
+for(const a of g.O)for(const b of g.O)if(a!==b&&!a.destroyed&&!b.destroyed&&hit(a,b))applyCollisionScript(a,b);g.O=g.O.filter(o=>!o.destroyed);$('score').textContent=`Health: ${Math.max(0,Math.ceil(g.pl.health))} | Coins: ${g.got}/${g.total}`;g.ctx.fillStyle=p.background;g.ctx.fillRect(0,0,g.w,g.h);for(const o of g.O){if(o.layer==='ui'||o.behavior==='spawn'||o.collected||o.destroyed||o.type==='button'||o.type==='scriptobject')continue;g.ctx.save();g.ctx.translate(o.x+o.w/2,o.y+o.h/2);g.ctx.rotate((o.rotation||0)*Math.PI/180);const a=p.assets.find(a=>a.id===o.assetId);if(a){const im=new Image();im.src=a.data;g.ctx.imageSmoothingEnabled=false;g.ctx.drawImage(im,-o.w/2,-o.h/2,o.w,o.h)}else{g.ctx.fillStyle=o.type==='being'?(o.beingRole==='enemy'?'#e3424f':o.beingRole==='neutral'?'#9b8cff':o.color):o.color;if(['being','player','enemy','coin'].includes(o.type)){g.ctx.beginPath();g.ctx.ellipse(0,0,o.w/2,o.h/2,0,0,7);g.ctx.fill()}else if(['text','label'].includes(o.type)){g.ctx.font='20px system-ui';g.ctx.textAlign='center';g.ctx.fillText(o.text||o.name,0,5)}else if(o.type==='healthbar'){g.ctx.fillStyle='#34131a';g.ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h);g.ctx.fillStyle=o.color;g.ctx.fillRect(-o.w/2,-o.h/2,o.w*Math.max(0,g.pl.health/100),o.h)}else g.ctx.fillRect(-o.w/2,-o.h/2,o.w,o.h)}g.ctx.restore()}for(const o of g.O.filter(o=>o.layer==='ui'&&o.type!=='button')){g.ctx.fillStyle=o.color;if(o.type==='healthbar'){g.ctx.fillStyle='#34131a';g.ctx.fillRect(o.x,o.y,o.w,o.h);g.ctx.fillStyle=o.color;g.ctx.fillRect(o.x,o.y,o.w*Math.max(0,g.pl.health/100),o.h)}else{g.ctx.font='20px system-ui';g.ctx.fillText(o.text||o.name,o.x,o.y+20)}}if(g.pl.health<=0){g.ctx.fillStyle='#000b';g.ctx.fillRect(0,0,g.w,g.h);g.ctx.fillStyle='white';g.ctx.textAlign='center';g.ctx.font='bold 42px system-ui';g.ctx.fillText('GAME OVER',g.w/2,g.h/2)}requestAnimationFrame(loop)}
 function exported(){const data=JSON.stringify(p).replace(/</g,'\\u003c');return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${p.name}</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:system-ui}iframe{border:0;width:100%;height:100%}.note{padding:30px}</style></head><body><div class="note"><h1>${p.name}</h1><p>This project was exported from Derpedit v0.2.</p><p>Open the project in Derpedit for full multi-room play testing. Standalone multi-room runtime export is coming in the next update.</p><details><summary>Project data</summary><pre id="data"></pre></details></div><script>const P=${data};document.getElementById('data').textContent=JSON.stringify(P,null,2);<\/script></body></html>`}$('export').onclick=()=>download((p.name||'Game').replace(/\W+/g,'-')+'.html',exported(),'text/html');
 const px=$('pixelCanvas'),pxc=px.getContext('2d'),colors=['#000000','#ffffff','#ff3b4f','#ff9f1c','#ffe74c','#3ddc84','#2389ff','#8d5cff','#8b5a2b','#ff72c6','#5de0e6','#777777','transparent'];let drawColor=colors[0],drawing=false;function drawPixels(){pxc.clearRect(0,0,16,16);pxc.strokeStyle='#ffffff22';pxc.lineWidth=.03;for(let i=0;i<=16;i++){pxc.beginPath();pxc.moveTo(i,0);pxc.lineTo(i,16);pxc.stroke();pxc.beginPath();pxc.moveTo(0,i);pxc.lineTo(16,i);pxc.stroke()}}function pixelAt(e,erase=false){const r=px.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*16),y=Math.floor((e.clientY-r.top)/r.height*16);if(erase||drawColor==='transparent')pxc.clearRect(x,y,1,1);else{pxc.fillStyle=drawColor;pxc.fillRect(x,y,1,1)}}px.onpointerdown=e=>{drawing=true;pixelAt(e,e.button===2)};px.onpointermove=e=>{if(drawing)pixelAt(e,e.buttons===2)};addEventListener('pointerup',()=>drawing=false);px.oncontextmenu=e=>e.preventDefault();const cs=$('colors');for(const c of colors){const b=document.createElement('button');b.className='swatch'+(c===drawColor?' on':'');b.style.background=c==='transparent'?'repeating-conic-gradient(#777 0 25%,#333 0 50%) 0/12px 12px':c;b.onclick=()=>{drawColor=c;[...cs.children].forEach(x=>x.classList.remove('on'));b.classList.add('on')};cs.appendChild(b)}$('newPixel').onclick=()=>{$('pixelModal').classList.remove('hidden');drawPixels()};$('closePixel').onclick=()=>$('pixelModal').classList.add('hidden');$('clearPixel').onclick=drawPixels;$('savePixel').onclick=()=>{checkpoint();const a={id:uid(),name:$('assetName').value||'Sprite',data:px.toDataURL('image/png')};p.assets.push(a);selectedAsset=a.id;$('pixelModal').classList.add('hidden');render();status('Pixel asset saved.')};$('applyAsset').onclick=()=>{const o=selected();if(!o||!selectedAsset)return alert('Select an asset in Asset Explorer first.');checkpoint();o.assetId=selectedAsset;render()};
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('on'));b.classList.add('on');for(const n of ['parts','rooms','assets','toolbox'])$('tab-'+n).classList.toggle('hidden',n!==b.dataset.tab)});$('projectName').onchange=render;$('bg').onchange=render;$('gameType').onchange=render;
-// starter project
-roomId='room1';add('label');selected().text='DERPEDIT GAME';selected().x=220;selected().y=110;add('button');selected().text='START';selected().x=230;selected().y=220;selected().targetRoom='room2';roomId='room2';add('being');selected().name='Player';selected().beingRole='player';selected().behavior='player';selected().team='Player';add('wall');selected().x=80;selected().y=340;selected().w=420;add('being');selected().name='Enemy';selected().beingRole='enemy';selected().behavior='chase';selected().team='Enemy';selected().color='#e3424f';selected().x=430;selected().y=180;add('coin');selected().x=320;selected().y=210;add('damage');selected().x=220;selected().y=330;hist=[];future=[];sel=null;sync();buttons();render();status('v0.4.3 Being example project loaded.');
+// startup: restore the most recent browser autosave, otherwise create the starter project
+if(restoreAutosave()){
+  sync();
+  render();
+  status('Autosaved project restored.');
+}else{
+  roomId='room1';
+  add('label');selected().text='DERPEDIT GAME';selected().x=220;selected().y=110;
+  add('button');selected().text='START';selected().x=230;selected().y=220;selected().targetRoom='room2';
+  roomId='room2';
+  add('being');selected().name='Player';selected().beingRole='player';selected().behavior='player';selected().team='Player';
+  add('collisionblock');selected().x=80;selected().y=340;selected().w=420;
+  add('being');selected().name='Enemy';selected().beingRole='enemy';selected().behavior='chase';selected().team='Enemy';selected().color='#e3424f';selected().x=430;selected().y=180;
+  roomId='room1';sel=null;sync();render();persistProject();
+  status('v0.5.1 starter project loaded.');
+}
+window.addEventListener('beforeunload',persistProject);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')persistProject()});
