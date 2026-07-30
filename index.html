@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v0.7</title>
+<title>Derpedit v0.7.1</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.7 — Classic Runtime: Items & Aiming</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="export">Export Game HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v0.7.1 — Combat & Optional Online</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="onlineBtn">🌐 Online</button><button id="export">Export Game HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Objects</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Sprites</button><button data-tab="toolbox">Toolbox</button></div>
@@ -66,10 +66,16 @@
 <label class="checkrow">Pickup by touching<input id="autoPickup" type="checkbox" checked></label>
 <label class="checkrow">Equip when picked up<input id="equipOnPickup" type="checkbox" checked></label>
 <label class="checkrow">Usable / weapon<input id="itemUsable" type="checkbox"></label>
-<label>Weapon Type<select id="weaponType"><option value="none">None</option><option value="projectile">Ranged projectile</option></select></label>
+<label>Weapon Type<select id="weaponType"><option value="none">None</option><option value="projectile">Ranged projectile</option><option value="melee">Melee</option></select></label>
 <div class="two"><label>Projectile Speed<input id="projectileSpeed" type="number" min="1" value="520"></label><label>Damage<input id="projectileDamage" type="number" min="0" value="15"></label></div>
 <div class="two"><label>Cooldown (seconds)<input id="weaponCooldown" type="number" min="0" step="0.05" value="0.25"></label><label>Projectile lifetime<input id="projectileLifetime" type="number" min="0.1" step="0.1" value="3"></label></div>
 <div class="two"><label>Shot count<input id="projectileCount" type="number" min="1" value="1"></label><label>Spread (degrees)<input id="projectileSpread" type="number" min="0" value="0"></label></div>
+<div id="meleeFields">
+<div class="two"><label>Melee Range<input id="meleeRange" type="number" min="1" value="80"></label><label>Melee Arc (degrees)<input id="meleeArc" type="number" min="1" max="360" value="100"></label></div>
+<div class="two"><label>Melee Damage<input id="meleeDamage" type="number" min="0" value="25"></label><label>Swing Time<input id="meleeSwingTime" type="number" min="0.05" step="0.05" value="0.18"></label></div>
+<div class="two"><label>Knockback<input id="meleeKnockback" type="number" min="0" value="0"></label><label>Hit Once Per Swing<input id="meleeHitOnce" type="checkbox" checked></label></div>
+</div>
+
 <label>Description<input id="itemDescription" placeholder="A useful item."></label>
 <p class="muted">Players pick this Item up by touching it. It is added to a Room-persistent hotbar and can equip automatically.</p>
 </div>
@@ -100,6 +106,27 @@ loop "run Change wait 1 run Change2 wait 1"</pre>
 </div>
 </div></div>
 
+
+<div id="onlineModal" class="modal hidden"><div class="modalBox onlineBox">
+<div class="row"><h2 style="flex:1">OPTIONAL ONLINE / SUPABASE</h2><button id="closeOnline">Close</button></div>
+<p class="muted">Games remain fully offline unless Online is enabled. Use a Supabase Project URL and a browser-safe Publishable key (or legacy anon key). Never use a secret/service_role key here.</p>
+<label class="checkrow">Enable Online for this project<input id="onlineEnabled" type="checkbox"></label>
+<label class="stack">Supabase Project URL<input id="supabaseUrl" placeholder="https://your-project.supabase.co"></label>
+<label class="stack">Publishable / anon key<input id="supabaseKey" type="password" placeholder="sb_publishable_... or legacy anon key"></label>
+<div class="two"><label>Leaderboard table<input id="leaderboardTable" value="derpedit_leaderboard"></label><label>Default player name<input id="onlinePlayerName" value="Player"></label></div>
+<label class="stack">Online value names<input id="onlineValueNames" placeholder="Score, Coins, BestTime"></label>
+<p class="muted">Only values listed above may be sent to a leaderboard. Separate names with commas. Each value gets its own ranking.</p>
+<div class="row"><button id="saveOnline" class="primary">Save Settings</button><button id="testOnline">Test Connection</button><button id="copySupabaseSql">Copy Setup SQL</button></div>
+<div id="onlineStatus" class="section muted">Online is optional.</div>
+<div class="section">
+<h2>RUNTIME COMMANDS</h2>
+<pre class="guideExample">await DerpeditOnline.submitScore("Score", 250, "Player")
+await DerpeditOnline.getLeaderboard("Score", 10)</pre>
+<p class="muted">These commands are available to exported games and Play Mode. They do nothing when Online is disabled.</p>
+</div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/derpyscript.js"></script>
 <script src="js/app.js"></script>
 <script src="js/toolbox.js"></script>
@@ -107,5 +134,6 @@ loop "run Change wait 1 run Change2 wait 1"</pre>
 <script src="js/v04.js"></script>
 <script src="js/v05.js"></script>
 <script src="js/v07-items-aim.js"></script>
+<script src="js/online.js"></script>
 </body>
 </html>

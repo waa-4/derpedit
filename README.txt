@@ -1,38 +1,55 @@
-DERPEDIT v0.7 — CLASSIC RUNTIME: ITEMS & AIMING
+DERPEDIT v0.7.1 — COMBAT & OPTIONAL ONLINE
 
-This version is based directly on the supplied v0.6.3 build.
+BASED ON
+- The classic v0.7 build.
+- Rendering, textures, colors, scaling, camera, Rooms, physics, movement, and editor layout remain unchanged.
 
-UNCHANGED
-- Classic Play Mode renderer
-- Imported textures and pixel-art rendering
-- Object colors and shapes
-- Canvas sizing and scaling
-- Camera behavior
-- Physics and movement
-- Enemy behavior
-- Rooms, UI objects, scripts, and the editor interface
+BULLET COLLISION FIX
+- Bullets now recognize Enemy Beings, chase Beings, and opposing-team Beings.
+- Collision uses both normal overlap and swept collision.
+- Swept collision prevents fast projectiles from passing completely through an enemy between frames.
+- Bullets damage enemies and disappear on impact.
+- Enemy health reaching zero destroys that enemy.
 
-ITEM FIXES
-- Play inventory remains temporary and is never stored in project autosave.
-- Pressing Play starts a fresh run.
-- Room transitions preserve the current run's inventory.
-- Pressing Stop clears the run.
-- Returning to a Room during the same run does not let the same physical Item
-  object increase its count again.
-- Separate duplicate Item objects can still each be collected normally.
+MELEE
+1. Create or select an Item.
+2. Turn on Usable / weapon.
+3. Set Weapon Type to Melee.
+4. Configure:
+   - Melee Range
+   - Melee Arc
+   - Melee Damage
+   - Swing Time
+   - Knockback
+   - Hit Once Per Swing
+5. Equip the Item and click, press F, or press Space in a top-down game.
+6. The melee arc follows the same 360-degree aiming system.
 
-AIMING FIXES
-- Moving the mouse across the canvas updates aim continuously in all directions.
-- Clicking fires toward the exact cursor position.
-- F and Space use the latest cursor aim.
-- Before the cursor enters the game, keyboard firing falls back to the previous
-  movement-facing direction.
-- Pointer coordinates use the classic renderer's CSS-pixel coordinate space, so
-  browser scaling and device-pixel ratio do not force shots into one direction.
+OPTIONAL SUPABASE ONLINE
+- Press the new Online button.
+- Enter:
+  1. Supabase Project URL
+  2. Browser-safe Publishable key, or a legacy anon key
+- Never paste a secret key or service_role key into a browser game.
+- Online remains disabled unless explicitly enabled.
+- Offline games continue working without Supabase.
 
-WEAPON SETUP
-- Usable / weapon: enabled
-- Weapon Type: Ranged projectile
-- Adjust damage, speed, cooldown, lifetime, count, and spread
+LEADERBOARD SETUP
+- Run SUPABASE_SETUP.sql in the Supabase SQL Editor.
+- The included table supports multiple games and multiple online value names.
+- Configure allowed names such as:
+  Score, Coins, BestTime
+- Runtime API:
+  await DerpeditOnline.submitScore("Score", 250, "Player")
+  await DerpeditOnline.getLeaderboard("Score", 10)
 
-Open the index.html included in this folder. It loads js/v07-items-aim.js.
+SECURITY NOTE
+- The included example allows public reading and public score submission.
+- It uses Row Level Security and basic database checks.
+- A public anonymous leaderboard cannot fully prevent cheating because players control their browser.
+- For important competitive games, use authenticated users and server-side validation.
+
+FILES
+- js/v07-items-aim.js: combat, aiming, ranged, and melee.
+- js/online.js: optional Supabase connection and leaderboard API.
+- SUPABASE_SETUP.sql: database table, RLS policies, and ranking index.

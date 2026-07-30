@@ -57,7 +57,7 @@ if(o.type==='wall'){o.type='collisionblock';o.name=o.name==='Wall'?'Collision Bl
 if(o.type==='being'){o.beingRole??=(o.behavior==='chase'?'enemy':o.behavior==='player'?'player':'neutral');}
 if(o.type==='basicblock'){o.behavior??='none';o.collision??=false;}
 if(o.type==='collisionblock'){o.behavior='solid';o.collision=true;}
-if(o.type==='item'){o.behavior='item';o.collision??=false;o.itemId??=o.name||'Item';o.stackSize??=1;o.pickupAmount??=1;o.autoPickup??=true;o.itemDescription??='';o.equipOnPickup??=true;o.itemUsable??=false;o.weaponType??='none';o.projectileSpeed??=520;o.projectileDamage??=15;o.weaponCooldown??=.25;o.projectileLifetime??=3;o.projectileCount??=1;o.projectileSpread??=0;}
+if(o.type==='item'){o.behavior='item';o.collision??=false;o.itemId??=o.name||'Item';o.stackSize??=1;o.pickupAmount??=1;o.autoPickup??=true;o.itemDescription??='';o.equipOnPickup??=true;o.itemUsable??=false;o.weaponType??='none';o.projectileSpeed??=520;o.projectileDamage??=15;o.weaponCooldown??=.25;o.projectileLifetime??=3;o.projectileCount??=1;o.projectileSpread??=0;o.meleeRange??=80;o.meleeArc??=100;o.meleeDamage??=25;o.meleeSwingTime??=.18;o.meleeKnockback??=0;o.meleeHitOnce??=true;}
 if(o.type==='scriptobject'){o.behavior='none';o.collision=false;o.physics=false;}}}}
 function add(type){
   const d=defs[type];
@@ -86,7 +86,7 @@ function add(type){
     stackSize:type==='item'?1:undefined,
     pickupAmount:type==='item'?1:undefined,
     autoPickup:type==='item'?true:undefined,
-    itemDescription:type==='item'?'':undefined,equipOnPickup:type==='item'?true:undefined,itemUsable:type==='item'?false:undefined,weaponType:type==='item'?'none':undefined,projectileSpeed:type==='item'?520:undefined,projectileDamage:type==='item'?15:undefined,weaponCooldown:type==='item'?0.25:undefined,projectileLifetime:type==='item'?3:undefined,projectileCount:type==='item'?1:undefined,projectileSpread:type==='item'?0:undefined
+    itemDescription:type==='item'?'':undefined,equipOnPickup:type==='item'?true:undefined,itemUsable:type==='item'?false:undefined,weaponType:type==='item'?'none':undefined,projectileSpeed:type==='item'?520:undefined,projectileDamage:type==='item'?15:undefined,weaponCooldown:type==='item'?0.25:undefined,projectileLifetime:type==='item'?3:undefined,projectileCount:type==='item'?1:undefined,projectileSpread:type==='item'?0:undefined,meleeRange:type==='item'?80:undefined,meleeArc:type==='item'?100:undefined,meleeDamage:type==='item'?25:undefined,meleeSwingTime:type==='item'?0.18:undefined,meleeKnockback:type==='item'?0:undefined,meleeHitOnce:type==='item'?true:undefined
   };
   if(type==='being')o.team='Player';
   if(type==='scriptobject')o.opacity=75;
@@ -116,6 +116,12 @@ if(o.type==='item'){
  $('projectileLifetime').value=o.projectileLifetime??3;
  $('projectileCount').value=o.projectileCount??1;
  $('projectileSpread').value=o.projectileSpread??0;
+ $('meleeRange').value=o.meleeRange??80;
+ $('meleeArc').value=o.meleeArc??100;
+ $('meleeDamage').value=o.meleeDamage??25;
+ $('meleeSwingTime').value=o.meleeSwingTime??.18;
+ $('meleeKnockback').value=o.meleeKnockback??0;
+ $('meleeHitOnce').checked=o.meleeHitOnce!==false;
  $('itemDescription').value=o.itemDescription||'';
 }$('buttonFields').classList.toggle('hidden',o.type!=='button');$('combatFields').classList.toggle('hidden',['button','label','text','healthbar','item','scriptobject','basicblock','collisionblock'].includes(o.type));const tr=$('targetRoom');tr.innerHTML=p.rooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');tr.value=o.targetRoom||'';
 $('physics').checked=!!o.physics;$('gravity').checked=!!o.gravity;$('collision').checked=o.collision!==false;
