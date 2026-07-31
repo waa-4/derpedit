@@ -128,6 +128,18 @@ $('physics').checked=!!o.physics;$('gravity').checked=!!o.gravity;$('collision')
 for(const [id,key] of [['animIdle','idle'],['animWalk','walk'],['animJump','jump'],['animFall','fall']]){const el=$(id);el.innerHTML='<option value="">None</option>'+p.assets.filter(a=>a.kind!=='music').map(a=>`<option value="${a.id}">${a.name}</option>`).join('');el.value=o.animations?.[key]||''}
 }
 function bind(id,key,num=false){$(id).onchange=()=>{const o=selected();if(!o)return;checkpoint();o[key]=num?Number($(id).value):$(id).value;render()}}[['name','name'],['x','x',1],['y','y',1],['w','w',1],['h','h',1],['rot','rotation',1],['color','color'],['speed','speed',1],['behavior','behavior'],['health','health',1],['damage','damage',1],['cooldown','cooldown',1],['text','text'],['partLayer','layer'],['action','action'],['targetRoom','targetRoom'],['script','script'],['renderLayer','renderLayer',1],['opacity','opacity',1],['team','team']].forEach(a=>bind(...a));
+$('beingRole').onchange=()=>{
+  const o=selected();
+  if(!o||o.type!=='being')return;
+  checkpoint();
+  o.beingRole=$('beingRole').value;
+  if(o.beingRole==='player')o.behavior='player';
+  else if(o.beingRole==='enemy')o.behavior='chase';
+  else if(o.behavior==='player'||o.behavior==='chase')o.behavior='none';
+  persistProject();
+  render();
+  status('Being Type changed to '+$('beingRole').selectedOptions[0].text+'.');
+};
 function startDrag(e){if(e.target.classList.contains('handle'))return;e.stopPropagation();const host=e.currentTarget.closest?.('.obj')||e.currentTarget,o=room().objects.find(q=>q.id===host.dataset.id);if(!o)return;sel=o.id;checkpoint();drag={id:o.id,sx:e.clientX,sy:e.clientY,x:o.x,y:o.y};host.setPointerCapture?.(e.pointerId);renderScene();renderProps()}
 function startResize(e){e.stopPropagation();const host=e.currentTarget.closest('.obj'),o=room().objects.find(q=>q.id===host.dataset.id);checkpoint();resize={id:o.id,handle:e.currentTarget.dataset.handle,sx:e.clientX,sy:e.clientY,x:o.x,y:o.y,w:o.w,h:o.h};host.setPointerCapture?.(e.pointerId)}
 addEventListener('pointermove',e=>{if(drag){const o=room().objects.find(q=>q.id===drag.id);o.x=snap(drag.x+e.clientX-drag.sx);o.y=snap(drag.y+e.clientY-drag.sy);render()}else if(resize){const o=room().objects.find(q=>q.id===resize.id),dx=e.clientX-resize.sx,dy=e.clientY-resize.sy;if(resize.handle==='se'){o.w=Math.max(8,snap(resize.w+dx));o.h=Math.max(8,snap(resize.h+dy))}else{o.x=snap(resize.x+dx);o.y=snap(resize.y+dy);o.w=Math.max(8,snap(resize.w-dx));o.h=Math.max(8,snap(resize.h-dy))}render()}});addEventListener('pointerup',()=>{drag=null;resize=null});workspace.onclick=()=>{if(!game){sel=null;render()}};

@@ -21,3 +21,20 @@ Open Multiplayer, enable it, enter a Supabase Project URL and publishable/anon k
 
 EXPORT
 Export GitHub ZIP creates index.html, css/game.css, js/game.js and README.md. Upload the ZIP contents to a GitHub repository and enable GitHub Pages.
+
+
+DERPEDIT v1.0.1 WAVE ENEMY FIX
+
+Fixed:
+- Changing a Being's Being Type to Enemy now saves correctly.
+- Wave enemy dropdowns now recognize Enemy Beings and older Beings using
+  the Chase behavior.
+- The wave editor gives clearer setup instructions.
+
+To add a custom wave enemy:
+1. Add a Being to the same Room.
+2. Select the Being.
+3. Change Being Type to Enemy.
+4. Customize its sprite, health, damage, speed, size, team, and scripts.
+5. Open Rooms > Edit Waves.
+6. Add an enemy row and select it from the dropdown.
