@@ -1,0 +1,5 @@
+-- Derpedit v1.0 uses Supabase Realtime Broadcast and Presence.
+-- In Supabase Dashboard, enable Realtime for your project.
+-- No public database table is required for position syncing.
+-- Use only the Project URL and publishable/anon key in browser projects.
+-- Never place a service_role key in Derpedit or an exported website.

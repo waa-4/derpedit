@@ -116,6 +116,13 @@
     };
   };
 
+
+  window.focusEditorWorld = function(worldX, worldY) {
+    camera.x = workspace.clientWidth / 2 - worldX * camera.zoom;
+    camera.y = workspace.clientHeight / 2 - worldY * camera.zoom;
+    applyCamera();
+  };
+
   window.resetEditorCamera = function() {
     camera.x = 0;
     camera.y = 0;

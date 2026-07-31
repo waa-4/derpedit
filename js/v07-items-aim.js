@@ -23,6 +23,9 @@
   [
     ['equipOnPickup','equipOnPickup',{checkbox:true}],
     ['itemUsable','itemUsable',{checkbox:true}],
+    ['healOnClick','healOnClick',{checkbox:true}],
+    ['healAmount','healAmount',{number:true}],
+    ['consumeOnHeal','consumeOnHeal',{checkbox:true}],
     ['weaponType','weaponType',{}],
     ['projectileSpeed','projectileSpeed',{number:true}],
     ['projectileDamage','projectileDamage',{number:true}],
@@ -58,6 +61,24 @@
       button.innerHTML=`<span>${index+1}</span><strong>${id}</strong><small>x${g.inventory[id]||0}</small>`;
       button.onpointerdown=event=>{
         event.preventDefault(); event.stopPropagation();
+        if(item.healOnClick){
+          const amount=Math.max(1,Number(item.healAmount)||25);
+          const before=Number(g.pl.health)||0;
+          const max=Number(g.pl.maxHealth||100);
+          g.pl.health=Math.min(max,before+amount);
+          if(item.consumeOnHeal!==false){
+            g.inventory[id]=Math.max(0,(g.inventory[id]||0)-1);
+            if(g.inventory[id]<=0){
+              delete g.inventory[id];
+              g.hotbar=g.hotbar.filter(slot=>itemId(slot)!==id);
+              if(g.equipped===id)g.equipped=null;
+              if(runState){runState.hotbar=g.hotbar;runState.equipped=g.equipped;runState.inventory=g.inventory}
+            }
+          }
+          status(id+' healed '+Math.max(0,Math.round(g.pl.health-before))+' health.');
+          renderHotbar(g);
+          return;
+        }
         g.equipped=id;
         if(runState)runState.equipped=id;
         renderHotbar(g);
@@ -209,7 +230,7 @@
       bullet.x+=bullet.vx*dt; bullet.y+=bullet.vy*dt;
 
       if(now-bullet.born>=bullet.lifetime||
-         bullet.x<-100||bullet.y<-100||bullet.x>g.w+100||bullet.y>g.h+100){
+         bullet.x<-100||bullet.y<-100||bullet.x>(g.worldW||g.w)+100||bullet.y>(g.worldH||g.h)+100){
         bullet.dead=true; continue;
       }
 
