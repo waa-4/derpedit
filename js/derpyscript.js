@@ -1,6 +1,12 @@
 'use strict';
 window.DerpyScript = (() => {
   const commandDocs = [
+    {command:'breakable true/false', category:'Objects', description:'Allows bullets and melee attacks to damage and eventually destroy an Object.', example:'breakable true\nbreak health 100'},
+    {command:'create enemy "___"', category:'Generator', description:'Creates an Enemy Being in the current generated Room. Following enemy commands modify that enemy.', example:'create enemy "Zombie"\nenemy size 24 24\nenemy health 75\nenemy speed 95\nenemy damage 12\nenemy color #55aa55'},
+    {command:'create gun "___"', category:'Generator', description:'Creates an auto-pickup weapon Item. Following gun commands configure it.', example:'create gun "Pistol"\ngun type projectile\ngun damage 20\ngun cooldown 0.25\ngun projectile speed 650'},
+    {command:'gun type catapult', category:'Weapons', description:'Creates a lobbed attack that rises, lands, and damages an area.', example:'gun type catapult\ngun catapult arc 180\ngun catapult radius 70'},
+    {command:'new value ___ = ___', category:'Values', description:'Creates a starting project value through the Generate tab.', example:'new value Coins = 0'},
+
     {command:'when game starts', category:'Events', description:'Runs the following commands when the Room begins.', example:'when game starts\nrun Setup'},
     {command:'when collided with ___', category:'Events', description:'Runs commands when this Object touches the named Object, ID, or Object type.', example:'when collided with Player\ntake damage 10'},
     {command:'wait ___', category:'Timing', description:'Waits for a number of seconds before continuing inside a custom script or loop.', example:'wait 1'},

@@ -36,8 +36,91 @@ function enemyOptions(selectedId=''){
  function baseBeing(role,x,y,color){return {id:uid(),type:'being',name:role==='player'?'Player':'Enemy',beingRole:role,behavior:role==='player'?'player':'chase',x,y,w:44,h:44,rotation:0,color,speed:role==='player'?240:100,health:100,damage:10,cooldown:.5,layer:'world',opacity:100,renderLayer:0,physics:false,gravity:false,collision:true,team:role==='player'?'Player':'Enemy',animations:{idle:'',walk:'',jump:'',fall:''},script:''}}
  function applyTemplate(t){checkpoint();let r={id:uid(),name:'Game',type:'game',cameraMode:'follow',width:2400,height:1400,infinite:false,musicId:'',objects:[],waveEnabled:false,waves:[]};r.objects.push(baseBeing('player',120,120,'#278cff'));if(t==='platformer'){p.gameType='platformer';r.name='Platformer';r.objects.push({id:uid(),type:'collisionblock',name:'Floor',x:0,y:620,w:2200,h:80,rotation:0,color:'#d8dee9',speed:0,behavior:'solid',health:9999,damage:0,cooldown:0,layer:'world',opacity:100,renderLayer:0,collision:true,team:'Neutral',animations:{},script:''})}else{p.gameType='topdown';const e=baseBeing('enemy',700,400,'#e3424f');r.objects.push(e);if(t==='waves'||t==='shooter'){r.waveEnabled=true;r.waves=[1,2,3].map((_,i)=>({delay:1,entries:[{enemyId:e.id,count:(i+1)*2,speed:90+i*25,lootItemId:''}]}))}}if(t==='multiplayer'){p.multiplayer.enabled=true;r.name='Shared Sandbox';r.width=5000;r.height=3000;window.DerpeditMultiplayer.ensureLobby()}p.rooms.push(r);roomId=r.id;sel=null;sync();render();persistProject();status('Template created: '+r.name)}
  // Script game generator
- q('generatorBtn').onclick=()=>{const sample=`create game "My Game"\ngame background #202633\ngame type topdown\ncreate room "Main Menu" menu\ncreate room "Level 1" game\nroom "Level 1" camera follow\nroom "Level 1" size 3000 1800`;const m=modal('Generate Game from DerpyScript',`<p>Runs once in the editor and can create up to 10 Rooms.</p><textarea id="genCode" class="generatorCode">${sample}</textarea><div class="v1Actions"><button id="runGen">Generate Project</button></div>`);m.querySelector('#runGen').onclick=()=>{generate(m.querySelector('#genCode').value);m.remove()}};
- function generate(src){checkpoint();const lines=src.split(/\n/).map(x=>x.trim()).filter(Boolean);let np={version:'1.0',name:'Generated Game',gameType:'topdown',background:'#202633',startRoom:'',music:[],sounds:[],assets:[],variables:{},multiplayer:{enabled:false,url:'',key:'',maxPlayers:8},rooms:[]};for(const line of lines){let m;if((m=line.match(/^create game(?:\s+"([^"]+)")?/i)))np.name=m[1]||np.name;else if((m=line.match(/^game background\s+(.+)/i)))np.background=m[1];else if((m=line.match(/^game type\s+(topdown|platformer)/i)))np.gameType=m[1].toLowerCase();else if((m=line.match(/^create room\s+"([^"]+)"(?:\s+(game|menu))?/i))&&np.rooms.length<10){const id=uid();np.rooms.push({id,name:m[1],type:m[2]||'game',cameraMode:'fixed',width:1280,height:720,infinite:false,musicId:'',objects:[],waveEnabled:false,waves:[]});np.startRoom||=id}else if((m=line.match(/^room\s+"([^"]+)"\s+camera\s+(fixed|follow|infinite)/i))){const r=np.rooms.find(x=>x.name===m[1]);if(r)r.cameraMode=m[2]}else if((m=line.match(/^room\s+"([^"]+)"\s+size\s+(\d+)\s+(\d+)/i))){const r=np.rooms.find(x=>x.name===m[1]);if(r){r.width=Number(m[2]);r.height=Number(m[3])}}}if(!np.rooms.length){const id=uid();np.rooms=[{id,name:'Room 1',type:'game',cameraMode:'follow',width:1280,height:720,infinite:false,objects:[],waveEnabled:false,waves:[]}];np.startRoom=id}p=np;roomId=p.startRoom;sel=null;sync();render();persistProject();status('Generated '+p.rooms.length+' Room(s).')}
+ q('generatorBtn').onclick=()=>{const sample=`create game "Small Wave Shooter"
+game background #202633
+game type topdown
+create room "Arena" game
+room "Arena" camera follow
+room "Arena" size 900 600
+create player "Player"
+create gun "Pistol"
+gun type projectile
+gun damage 20
+gun cooldown 0.25
+gun projectile speed 650
+gun projectile lifetime 2
+gun spread 0
+create enemy "Small Zombie"
+enemy size 24 24
+enemy health 75
+enemy speed 95
+enemy damage 12
+enemy color #55aa55
+wave 1
+spawn "Small Zombie" 5
+wave 2
+spawn "Small Zombie" 8
+wave 3
+spawn "Small Zombie" 12`;const m=modal('Generate Game from DerpyScript',`<p>Runs once in the editor and can create up to 10 Rooms.</p><textarea id="genCode" class="generatorCode">${sample}</textarea><div class="v1Actions"><button id="runGen">Generate Project</button></div>`);m.querySelector('#runGen').onclick=()=>{generate(m.querySelector('#genCode').value);m.remove()}};
+ function generatedBeing(role,name){
+  return {id:uid(),type:'being',name,beingRole:role,behavior:role==='enemy'?'chase':'player',movementType:'normal',bouncePower:430,throwPower:700,x:120,y:120,w:44,h:44,rotation:0,color:role==='enemy'?'#e3424f':'#278cff',speed:role==='enemy'?100:240,health:100,damage:10,cooldown:.5,layer:'world',opacity:100,renderLayer:0,physics:false,gravity:false,collision:true,team:role==='enemy'?'Enemy':'Player',animations:{idle:'',walk:'',jump:'',fall:''},script:'',breakable:false,breakHealth:100,breakDrop:''};
+ }
+ function generatedGun(name){
+  return {id:uid(),type:'item',name,itemId:name,x:180,y:120,w:30,h:30,rotation:0,color:'#ffd33d',speed:0,behavior:'item',health:1,damage:0,cooldown:0,layer:'world',opacity:100,renderLayer:0,physics:false,gravity:false,collision:false,team:'Neutral',animations:{idle:'',walk:'',jump:'',fall:''},script:'',stackSize:1,pickupAmount:1,autoPickup:true,equipOnPickup:true,itemUsable:true,weaponType:'projectile',projectileSpeed:650,projectileDamage:20,weaponCooldown:.25,projectileLifetime:2,projectileCount:1,projectileSpread:0,catapultArcHeight:180,catapultRadius:70,catapultTravelTime:.8,catapultDamage:30,breakable:false,breakHealth:100,breakDrop:''};
+ }
+ function generate(src){
+  checkpoint();
+  const lines=src.split(/\n/).map(x=>x.trim()).filter(Boolean);
+  let np={version:'1.1',name:'Generated Game',gameType:'topdown',background:'#202633',startRoom:'',music:[],sounds:[],assets:[],variables:{},multiplayer:{enabled:false,url:'',key:'',maxPlayers:8},rooms:[]};
+  let currentRoom=null,currentEnemy=null,currentGun=null,currentWave=null;
+  const getRoom=name=>np.rooms.find(r=>r.name.toLowerCase()===String(name).toLowerCase());
+  const ensureRoom=()=>{
+    if(currentRoom)return currentRoom;
+    const id=uid();currentRoom={id,name:'Game',type:'game',cameraMode:'follow',width:1280,height:720,infinite:false,musicId:'',objects:[],waveEnabled:false,waves:[]};
+    np.rooms.push(currentRoom);np.startRoom||=id;return currentRoom;
+  };
+  for(const line of lines){
+    let m;
+    if((m=line.match(/^create game(?:\s+"([^"]+)")?/i)))np.name=m[1]||np.name;
+    else if((m=line.match(/^game background\s+(.+)/i)))np.background=m[1];
+    else if((m=line.match(/^game type\s+(topdown|platformer)/i)))np.gameType=m[1].toLowerCase();
+    else if((m=line.match(/^create room\s+"([^"]+)"(?:\s+(game|menu))?/i))&&np.rooms.length<10){
+      const id=uid();currentRoom={id,name:m[1],type:m[2]||'game',cameraMode:'fixed',width:1280,height:720,infinite:false,musicId:'',objects:[],waveEnabled:false,waves:[]};
+      np.rooms.push(currentRoom);np.startRoom||=id;currentEnemy=null;currentGun=null;currentWave=null;
+    }
+    else if((m=line.match(/^use room\s+"([^"]+)"/i)))currentRoom=getRoom(m[1])||currentRoom;
+    else if((m=line.match(/^room\s+"([^"]+)"\s+camera\s+(fixed|follow|infinite)/i))){const r=getRoom(m[1]);if(r)r.cameraMode=m[2]}
+    else if((m=line.match(/^room\s+"([^"]+)"\s+size\s+(\d+)\s+(\d+)/i))){const r=getRoom(m[1]);if(r){r.width=Number(m[2]);r.height=Number(m[3])}}
+    else if((m=line.match(/^create player(?:\s+"([^"]+)")?/i))){currentEnemy=null;currentGun=null;const o=generatedBeing('player',m[1]||'Player');ensureRoom().objects.push(o)}
+    else if((m=line.match(/^create enemy\s+"([^"]+)"/i))){currentGun=null;currentEnemy=generatedBeing('enemy',m[1]);ensureRoom().objects.push(currentEnemy)}
+    else if((m=line.match(/^enemy sprite\s+"([^"]+)"/i))){if(currentEnemy)currentEnemy.generatedSpriteName=m[1]}
+    else if((m=line.match(/^enemy size\s+(\d+)\s+(\d+)/i))){if(currentEnemy){currentEnemy.w=Number(m[1]);currentEnemy.h=Number(m[2])}}
+    else if((m=line.match(/^enemy health\s+([\d.]+)/i))){if(currentEnemy)currentEnemy.health=Number(m[1])}
+    else if((m=line.match(/^enemy speed\s+([\d.]+)/i))){if(currentEnemy)currentEnemy.speed=Number(m[1])}
+    else if((m=line.match(/^enemy damage\s+([\d.]+)/i))){if(currentEnemy)currentEnemy.damage=Number(m[1])}
+    else if((m=line.match(/^enemy color\s+(.+)/i))){if(currentEnemy)currentEnemy.color=m[1]}
+    else if((m=line.match(/^enemy movement\s+(normal|bouncy|throw)/i))){if(currentEnemy)currentEnemy.movementType=m[1].toLowerCase()}
+    else if((m=line.match(/^create gun\s+"([^"]+)"/i))){currentEnemy=null;currentGun=generatedGun(m[1]);ensureRoom().objects.push(currentGun)}
+    else if((m=line.match(/^gun type\s+(projectile|catapult|melee)/i))){if(currentGun)currentGun.weaponType=m[1].toLowerCase()}
+    else if((m=line.match(/^gun projectile sprite\s+"([^"]+)"/i))){if(currentGun)currentGun.projectileSpriteName=m[1]}
+    else if((m=line.match(/^gun damage\s+([\d.]+)/i))){if(currentGun){currentGun.projectileDamage=Number(m[1]);currentGun.meleeDamage=Number(m[1]);currentGun.catapultDamage=Number(m[1])}}
+    else if((m=line.match(/^gun cooldown\s+([\d.]+)/i))){if(currentGun)currentGun.weaponCooldown=Number(m[1])}
+    else if((m=line.match(/^gun projectile speed\s+([\d.]+)/i))){if(currentGun)currentGun.projectileSpeed=Number(m[1])}
+    else if((m=line.match(/^gun projectile lifetime\s+([\d.]+)/i))){if(currentGun)currentGun.projectileLifetime=Number(m[1])}
+    else if((m=line.match(/^gun spread\s+([\d.]+)/i))){if(currentGun)currentGun.projectileSpread=Number(m[1])}
+    else if((m=line.match(/^gun count\s+(\d+)/i))){if(currentGun)currentGun.projectileCount=Number(m[1])}
+    else if((m=line.match(/^gun catapult radius\s+([\d.]+)/i))){if(currentGun)currentGun.catapultRadius=Number(m[1])}
+    else if((m=line.match(/^gun catapult arc\s+([\d.]+)/i))){if(currentGun)currentGun.catapultArcHeight=Number(m[1])}
+    else if((m=line.match(/^breakable\s+(true|false)/i))){const target=currentEnemy||currentGun;if(target)target.breakable=m[1].toLowerCase()==='true'}
+    else if((m=line.match(/^break health\s+([\d.]+)/i))){const target=currentEnemy||currentGun;if(target)target.breakHealth=Number(m[1])}
+    else if((m=line.match(/^new value\s+([A-Za-z_]\w*)(?:\s*=\s*(.+))?/i)))np.variables[m[1]]=m[2]!==undefined?(Number.isFinite(Number(m[2]))?Number(m[2]):m[2]):0;
+    else if((m=line.match(/^set value\s+([A-Za-z_]\w*)\s+to\s+(.+)/i)))np.variables[m[1]]=Number.isFinite(Number(m[2]))?Number(m[2]):m[2];
+    else if((m=line.match(/^wave\s+(\d+)/i))){const r=ensureRoom();r.waveEnabled=true;while(r.waves.length<Number(m[1]))r.waves.push({delay:1,entries:[]});currentWave=r.waves[Number(m[1])-1]}
+    else if((m=line.match(/^spawn\s+"([^"]+)"\s+(\d+)/i))){const r=ensureRoom(),enemy=r.objects.find(o=>o.type==='being'&&o.beingRole==='enemy'&&o.name.toLowerCase()===m[1].toLowerCase());if(currentWave&&enemy)currentWave.entries.push({enemyId:enemy.id,count:Number(m[2]),speed:enemy.speed,lootItemId:''})}
+  }
+  if(!np.rooms.length)ensureRoom();
+  p=np;roomId=p.startRoom;sel=null;sync();render();persistProject();status('Generated '+p.rooms.length+' Room(s), '+p.rooms.reduce((n,r)=>n+r.objects.length,0)+' Object(s).');
+ }
  // Multiplayer settings
  q('onlineBtn').onclick=()=>{p.multiplayer??={enabled:false,url:'',key:'',maxPlayers:8};const m=modal('Multiplayer',`<label class="checkrow">Enable multiplayer<input id="mpEnabled" type="checkbox" ${p.multiplayer.enabled?'checked':''}></label><label>Supabase Project URL<input id="mpUrl" value="${p.multiplayer.url||''}"></label><label>Publishable / anon key<input id="mpKey" type="password" value="${p.multiplayer.key||''}"></label><label>Maximum players<input id="mpMax" type="number" min="2" max="32" value="${p.multiplayer.maxPlayers||8}"></label><hr><div class="v1Row"><input id="playerName" placeholder="Player name" value="${localStorage.getItem('derpedit.playerName')||'Player'}"><input id="joinCode" maxlength="6" placeholder="JOIN CODE" value="${localStorage.getItem('derpedit.joinCode')||''}"></div><div class="v1Row"><button id="hostRoom">Create Code</button><button id="joinRoom">Join/Test</button><button id="leaveRoom">Disconnect</button></div><p class="muted">A Join Lobby Room is always created while multiplayer is enabled. Exported multiplayer projects need the Supabase Realtime setup from SUPABASE_MULTIPLAYER_SETUP.sql.</p><div class="v1Actions"><button id="saveMp">Save Settings</button></div>`);m.querySelector('#hostRoom').onclick=()=>m.querySelector('#joinCode').value=window.DerpeditMultiplayer.hostCode();m.querySelector('#joinRoom').onclick=async()=>{try{await window.DerpeditMultiplayer.connect(m.querySelector('#joinCode').value,m.querySelector('#playerName').value);status('Multiplayer test connected.')}catch(e){alert(e.message)}};m.querySelector('#leaveRoom').onclick=()=>window.DerpeditMultiplayer.disconnect();m.querySelector('#saveMp').onclick=()=>{checkpoint();p.multiplayer={enabled:m.querySelector('#mpEnabled').checked,url:m.querySelector('#mpUrl').value.trim(),key:m.querySelector('#mpKey').value.trim(),maxPlayers:Number(m.querySelector('#mpMax').value)||8};window.DerpeditMultiplayer.ensureLobby();persistProject();render();m.remove();status('Multiplayer settings saved.')}};
  q('exportZip').onclick=()=>window.DerpeditExporter.exportZip();
@@ -64,4 +147,30 @@ function enemyOptions(selectedId=''){
   {command:'create room "___" game/menu',category:'Generator',description:'Editor-only generator command. A generator can create up to 10 Rooms.',example:'create room "Level 1" game'}
  );
  normalize();render();
+
+ // v1.1 movement types: patches player input without replacing the renderer.
+ const oldStartMovement=startGame;
+ startGame=function(id,preserve=false){
+   oldStartMovement(id,preserve);
+   if(game){
+     game.pl.movementType??='normal';
+     game.pl.bouncePower??=430;
+     game.pl.throwPower??=700;
+     game.pl._throwVX??=0;game.pl._throwVY??=0;
+   }
+ };
+ const playCanvas=q('canvas');
+ playCanvas?.addEventListener('pointerdown',e=>{
+   if(!game||game.pl.movementType!=='throw')return;
+   const rect=playCanvas.getBoundingClientRect();
+   const screenX=(e.clientX-rect.left)*(game.w/rect.width);
+   const screenY=(e.clientY-rect.top)*(game.h/rect.height);
+   const pt=window.DerpeditCamera?window.DerpeditCamera.screenToWorld(game,screenX,screenY):{x:screenX,y:screenY};
+   const cx=game.pl.x+game.pl.w/2,cy=game.pl.y+game.pl.h/2;
+   const dx=pt.x-cx,dy=pt.y-cy,len=Math.hypot(dx,dy)||1;
+   game.pl._throwVX=dx/len*(game.pl.throwPower||700);
+   game.pl._throwVY=dy/len*(game.pl.throwPower||700);
+   game.pl._throwing=true;
+ });
+
 })();

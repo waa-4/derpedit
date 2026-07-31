@@ -38,7 +38,11 @@
     ['meleeDamage','meleeDamage',{number:true}],
     ['meleeSwingTime','meleeSwingTime',{number:true}],
     ['meleeKnockback','meleeKnockback',{number:true}],
-    ['meleeHitOnce','meleeHitOnce',{checkbox:true}]
+    ['meleeHitOnce','meleeHitOnce',{checkbox:true}],
+    ['catapultArcHeight','catapultArcHeight',{number:true}],
+    ['catapultRadius','catapultRadius',{number:true}],
+    ['catapultTravelTime','catapultTravelTime',{number:true}],
+    ['catapultDamage','catapultDamage',{number:true}]
   ].forEach(args=>bindItem(...args));
 
   const itemId = item => item?.itemId || item?.name || 'Item';
@@ -124,6 +128,19 @@
     return !!(playerTeam&&otherTeam&&playerTeam!==otherTeam);
   }
 
+  function damageBreakable(object,damage,g){
+    if(!object?.breakable||object.destroyed)return false;
+    object.breakHealth=Number(object.breakHealth??100)-Math.max(0,Number(damage)||0);
+    if(object.breakHealth<=0){
+      object.destroyed=true;
+      if(object.breakDrop){
+        g.inventory[object.breakDrop]=(g.inventory[object.breakDrop]||0)+1;
+        status(object.breakDrop+' dropped.');
+      }
+    }
+    return true;
+  }
+
   function damageEnemy(enemy,damage,knockX=0,knockY=0){
     enemy.health=Number(enemy.health??100)-Math.max(0,Number(damage)||0);
     if(knockX||knockY){enemy.x+=knockX;enemy.y+=knockY}
@@ -142,6 +159,7 @@
     if(target)updatePointerAim(g,target);
 
     if(item.weaponType==='projectile')shoot(g,item,target,now);
+    else if(item.weaponType==='catapult')lob(g,item,target,now);
     else if(item.weaponType==='melee')swing(g,item,target,now);
     else status(itemId(item)+' has no Weapon Type.');
   }
@@ -167,6 +185,25 @@
         color:item.color||'#ffd33d'
       });
     }
+  }
+
+  function lob(g,item,target,now){
+    const center={x:g.pl.x+g.pl.w/2,y:g.pl.y+g.pl.h/2};
+    const dir=direction(g,target);
+    const range=Math.max(80,Number(item.projectileSpeed)||520);
+    const destination=target||{x:center.x+dir.x*range,y:center.y+dir.y*range};
+    g.catapultShots??=[];
+    g.catapultShots.push({
+      startX:center.x,startY:center.y,
+      endX:destination.x,endY:destination.y,
+      born:now,
+      travel:Math.max(.1,Number(item.catapultTravelTime)||.8)*1000,
+      arc:Math.max(10,Number(item.catapultArcHeight)||180),
+      radius:Math.max(1,Number(item.catapultRadius)||70),
+      damage:Math.max(0,Number(item.catapultDamage??30)),
+      color:item.color||'#ffd33d',
+      exploded:false
+    });
   }
 
   function swing(g,item,target,now){
@@ -202,6 +239,18 @@
       if(Math.abs(delta)>swing.arc/2)continue;
       damageEnemy(enemy,swing.damage,swing.dx*swing.knockback,swing.dy*swing.knockback);
       swing.hit.add(enemy.id);
+    }
+    for(const object of g.O.filter(o=>o.breakable&&!o.destroyed)){
+      if(swing.hitOnce&&swing.hit.has(object.id))continue;
+      const ox=object.x+object.w/2,oy=object.y+object.h/2;
+      const dx=ox-cx,dy=oy-cy,distance=Math.hypot(dx,dy);
+      const radius=Math.hypot(object.w,object.h)/2;
+      if(distance>swing.range+radius)continue;
+      let delta=Math.atan2(dy,dx)-facing;
+      delta=Math.atan2(Math.sin(delta),Math.cos(delta));
+      if(Math.abs(delta)>swing.arc/2)continue;
+      damageBreakable(object,swing.damage,g);
+      swing.hit.add(object.id);
     }
   }
 
@@ -244,6 +293,15 @@
       }
       if(bullet.dead)continue;
 
+      for(const object of g.O.filter(o=>o.breakable&&!o.destroyed)){
+        if(aabb(bullet,object)||segmentHitsRect(bx1,by1,bx2,by2,object,bullet.w/2,bullet.h/2)){
+          damageBreakable(object,bullet.damage,g);
+          bullet.dead=true;
+          break;
+        }
+      }
+      if(bullet.dead)continue;
+
       for(const enemy of g.O.filter(o=>isEnemy(o,g))){
         if(aabb(bullet,enemy)||segmentHitsRect(bx1,by1,bx2,by2,enemy,bullet.w/2,bullet.h/2)){
           damageEnemy(enemy,bullet.damage);
@@ -253,6 +311,28 @@
       }
     }
     g.projectiles=(g.projectiles||[]).filter(b=>!b.dead);
+  }
+
+  function updateCatapults(g,now){
+    for(const shot of g.catapultShots||[]){
+      const progress=Math.min(1,(now-shot.born)/shot.travel);
+      shot.progress=progress;
+      if(progress>=1&&!shot.exploded){
+        shot.exploded=true;
+        for(const enemy of g.O.filter(o=>isEnemy(o,g))){
+          const ex=enemy.x+enemy.w/2,ey=enemy.y+enemy.h/2;
+          if(Math.hypot(ex-shot.endX,ey-shot.endY)<=shot.radius+Math.hypot(enemy.w,enemy.h)/2)
+            damageEnemy(enemy,shot.damage);
+        }
+        for(const object of g.O.filter(o=>o.breakable&&!o.destroyed)){
+          const ox=object.x+object.w/2,oy=object.y+object.h/2;
+          if(Math.hypot(ox-shot.endX,oy-shot.endY)<=shot.radius+Math.hypot(object.w,object.h)/2)
+            damageBreakable(object,shot.damage,g);
+        }
+        shot.dead=true;
+      }
+    }
+    g.catapultShots=(g.catapultShots||[]).filter(s=>!s.dead);
   }
 
   function updateMelee(g,now){
@@ -270,6 +350,14 @@
     for(const bullet of g.projectiles||[]){
       ctx.save();ctx.fillStyle=bullet.color||'#ffd33d';
       ctx.beginPath();ctx.arc(bullet.x+bullet.w/2,bullet.y+bullet.h/2,bullet.w/2,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+    for(const shot of g.catapultShots||[]){
+      const t=shot.progress||0;
+      const x=shot.startX+(shot.endX-shot.startX)*t;
+      const baseY=shot.startY+(shot.endY-shot.startY)*t;
+      const y=baseY-Math.sin(Math.PI*t)*shot.arc;
+      ctx.save();ctx.fillStyle=shot.color;ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=.18;ctx.beginPath();ctx.arc(shot.endX,shot.endY,shot.radius,0,Math.PI*2);ctx.fill();ctx.restore();
     }
     const cx=g.pl.x+g.pl.w/2,cy=g.pl.y+g.pl.h/2;
     for(const swing of g.meleeSwings||[]){
@@ -314,8 +402,9 @@
       const now=performance.now(), previous=active._combatTime||now;
       const dt=Math.min(.05,Math.max(0,(now-previous)/1000));
       active._combatTime=now;
-      active.meleeSwings??=[];
+      active.meleeSwings??=[];active.catapultShots??=[];
       updateProjectiles(active,dt,now);
+      updateCatapults(active,now);
       updateMelee(active,now);
     }
     originalLoop(t);

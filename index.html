@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v1.0.1</title>
+<title>Derpedit v1.1</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v1.0.1 — Wave Enemy Fix</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="templatesBtn">Templates</button><button id="generatorBtn">Generate</button><button id="onlineBtn">Multiplayer</button><button id="exportZip">Export GitHub ZIP</button><button id="export">Export Single HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v1.1 — Creation Update Part 1</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="templatesBtn">Templates</button><button id="generatorBtn">Generate</button><button id="onlineBtn">Multiplayer</button><button id="exportZip">Export GitHub ZIP</button><button id="export">Export Single HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Objects</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Sprites</button><button data-tab="toolbox">Toolbox</button></div>
@@ -40,6 +40,14 @@
 <aside class="panel right"><h2>OBJECT PROPERTIES</h2><input id="inspectorSearch" class="inspectorSearch" placeholder="Search properties..."><div id="none" class="muted">Select an Object to edit it.</div><div id="props" class="props hidden">
 <label>Name / ID<input id="name"></label><div class="two"><label>X<input id="x" type="number"></label><label>Y<input id="y" type="number"></label></div><div class="two"><label>Width<input id="w" type="number" min="8"></label><label>Height<input id="h" type="number" min="8"></label></div><label>Rotation<input id="rot" type="number"></label><label>Color<input id="color" type="color"></label><label>Space<select id="partLayer"><option value="world">World</option><option value="ui">UI</option></select></label>
 <div class="two"><label>Render Layer<input id="renderLayer" type="number" value="0"></label><label>Opacity %<input id="opacity" type="number" min="0" max="100" value="100"></label></div>
+<div class="section" id="breakableFields">
+<h2>BREAKABLE</h2>
+<label class="checkrow">Breakable<input id="breakable" type="checkbox"></label>
+<div class="two">
+<label>Break Health<input id="breakHealth" type="number" min="1" value="100"></label>
+<label>Drop Item ID<input id="breakDrop" placeholder="Wood"></label>
+</div>
+</div>
 <div class="v04props section"><h2>PHYSICS & TEAMS</h2>
 <label class="checkrow">Physics<input id="physics" type="checkbox"></label>
 <label class="checkrow">Gravity<input id="gravity" type="checkbox"></label>
@@ -57,6 +65,15 @@
 <option value="enemy">Enemy</option>
 <option value="neutral">Neutral / NPC</option>
 </select></label>
+<label>Movement Type<select id="movementType">
+<option value="normal">Normal</option>
+<option value="bouncy">Bouncy</option>
+<option value="throw">Throw</option>
+</select></label>
+<div class="two">
+<label>Bounce Power<input id="bouncePower" type="number" min="50" value="430"></label>
+<label>Throw Power<input id="throwPower" type="number" min="50" value="700"></label>
+</div>
 <p class="muted">A Being is one reusable living Part. Toggle whether it is controlled by the player, acts as an enemy, or stays neutral.</p>
 </div>
 <div id="itemFields" class="section hidden">
@@ -67,10 +84,21 @@
 <label class="checkrow">Equip when picked up<input id="equipOnPickup" type="checkbox" checked></label>
 <label class="checkrow">Usable / weapon<input id="itemUsable" type="checkbox"></label>
 <div class="section healFields"><h2>HEALING ITEM</h2><label class="checkrow">Heal when clicked<input id="healOnClick" type="checkbox"></label><label>Heal amount<input id="healAmount" type="number" min="1" value="25"></label><label class="checkrow">Remove after healing<input id="consumeOnHeal" type="checkbox" checked></label></div>
-<label>Weapon Type<select id="weaponType"><option value="none">None</option><option value="projectile">Ranged projectile</option><option value="melee">Melee</option></select></label>
+<label>Weapon Type<select id="weaponType"><option value="none">None</option><option value="projectile">Ranged projectile</option><option value="catapult">Catapult / Lob</option><option value="melee">Melee</option></select></label>
 <div class="two"><label>Projectile Speed<input id="projectileSpeed" type="number" min="1" value="520"></label><label>Damage<input id="projectileDamage" type="number" min="0" value="15"></label></div>
 <div class="two"><label>Cooldown (seconds)<input id="weaponCooldown" type="number" min="0" step="0.05" value="0.25"></label><label>Projectile lifetime<input id="projectileLifetime" type="number" min="0.1" step="0.1" value="3"></label></div>
 <div class="two"><label>Shot count<input id="projectileCount" type="number" min="1" value="1"></label><label>Spread (degrees)<input id="projectileSpread" type="number" min="0" value="0"></label></div>
+<div id="catapultFields">
+<div class="two">
+<label>Arc Height<input id="catapultArcHeight" type="number" min="10" value="180"></label>
+<label>Landing Radius<input id="catapultRadius" type="number" min="1" value="70"></label>
+</div>
+<div class="two">
+<label>Travel Time<input id="catapultTravelTime" type="number" min=".1" step=".1" value=".8"></label>
+<label>Area Damage<input id="catapultDamage" type="number" min="0" value="30"></label>
+</div>
+</div>
+
 <div id="meleeFields">
 <div class="two"><label>Melee Range<input id="meleeRange" type="number" min="1" value="80"></label><label>Melee Arc (degrees)<input id="meleeArc" type="number" min="1" max="360" value="100"></label></div>
 <div class="two"><label>Melee Damage<input id="meleeDamage" type="number" min="0" value="25"></label><label>Swing Time<input id="meleeSwingTime" type="number" min="0.05" step="0.05" value="0.18"></label></div>
