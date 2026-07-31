@@ -56,3 +56,15 @@ UNCHANGED
 - Physics
 - Controls and Play Mode
 - Waves, multiplayer, templates, and GitHub ZIP export
+
+
+DERPEDIT v1.2.1 — PLACEMENT FIX
+
+Fixed:
+- Objects can be inserted again.
+- v1.2 removed the old Game Type selector after combining it into Movement Mode,
+  but render() still attempted to read the removed #gameType element.
+- That caused render() to stop whenever an Object was added.
+- render() now reads Movement Mode and maintains the legacy gameType value only
+  for backward compatibility.
+- Added the visible Value Guide button if it was missing from the toolbar.
