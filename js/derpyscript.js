@@ -1,6 +1,14 @@
 'use strict';
 window.DerpyScript = (() => {
   const commandDocs = [
+    {command:'camera zoom ___', category:'Camera', description:'Changes the current Room camera zoom. In the editor, set In-game Zoom in the Rooms tab.', example:'camera zoom 1.5'},
+    {command:'gradient start ___ end ___', category:'Appearance', description:'Generator-friendly appearance idea for gradient Objects. Visual inspector supports gradients now.', example:'gradient start #224488 end #66ccff'},
+    {command:'font ___', category:'Text', description:'Sets a Text Object font in future runtime scripts; the inspector supports fonts now.', example:'font "Courier New"'},
+    {command:'text size ___', category:'Text', description:'Sets text scaling for Text, Label, and Button Objects.', example:'text size 32'},
+    {command:'add ___ to ___', category:'Values', description:'Adds a number to a named value.', example:'add 5 to Coins'},
+    {command:'remove ___ from ___', category:'Values', description:'Subtracts a number from a named value.', example:'remove 1 from Lives'},
+    {command:'set ___ to ___', category:'Values', description:'Sets a named value.', example:'set Score to 100'},
+
     {command:'breakable true/false', category:'Objects', description:'Allows bullets and melee attacks to damage and eventually destroy an Object.', example:'breakable true\nbreak health 100'},
     {command:'create enemy "___"', category:'Generator', description:'Creates an Enemy Being in the current generated Room. Following enemy commands modify that enemy.', example:'create enemy "Zombie"\nenemy size 24 24\nenemy health 75\nenemy speed 95\nenemy damage 12\nenemy color #55aa55'},
     {command:'create gun "___"', category:'Generator', description:'Creates an auto-pickup weapon Item. Following gun commands configure it.', example:'create gun "Pistol"\ngun type projectile\ngun damage 20\ngun cooldown 0.25\ngun projectile speed 650'},

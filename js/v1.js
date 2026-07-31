@@ -4,7 +4,7 @@
  p.version='1.0';p.sounds??=[];p.variables??={};p.multiplayer??={enabled:false,url:'',key:'',maxPlayers:8};
  // Room wave controls
  const oldNormalize=normalize;normalize=function(){oldNormalize();p.version='1.0';p.sounds??=[];p.variables??={};p.multiplayer??={enabled:false,url:'',key:'',maxPlayers:8};for(const r of p.rooms){r.waveEnabled??=false;r.waves??=[]}window.DerpeditMultiplayer?.ensureLobby()};
- const oldRooms=renderRooms;renderRooms=function(){oldRooms();const r=room();if(!r)return;q('waveEnabled').checked=!!r.waveEnabled};
+ const oldRooms=renderRooms;renderRooms=function(){oldRooms();const r=room();if(!r)return;q('waveEnabled').checked=!!r.waveEnabled;if(q('roomZoom'))q('roomZoom').value=r.zoom??1};
  q('waveEnabled').onchange=()=>{checkpoint();room().waveEnabled=q('waveEnabled').checked;render()};
  q('editWaves').onclick=()=>openWaves();
  function waveEnemyTemplates(){
@@ -38,7 +38,7 @@ function enemyOptions(selectedId=''){
  // Script game generator
  q('generatorBtn').onclick=()=>{const sample=`create game "Small Wave Shooter"
 game background #202633
-game type topdown
+movement mode topdown
 create room "Arena" game
 room "Arena" camera follow
 room "Arena" size 900 600
@@ -71,7 +71,7 @@ spawn "Small Zombie" 12`;const m=modal('Generate Game from DerpyScript',`<p>Runs
  function generate(src){
   checkpoint();
   const lines=src.split(/\n/).map(x=>x.trim()).filter(Boolean);
-  let np={version:'1.1',name:'Generated Game',gameType:'topdown',background:'#202633',startRoom:'',music:[],sounds:[],assets:[],variables:{},multiplayer:{enabled:false,url:'',key:'',maxPlayers:8},rooms:[]};
+  let np={version:'1.2',name:'Generated Game',gameType:'topdown',movementMode:'topdown',movementSettings:{acceleration:1200,friction:.86,gravity:900,jumpPower:420,throwPower:700,dashPower:850,dashCooldown:.5,swimDrag:.92,throwSticky:true},background:'#202633',startRoom:'',music:[],sounds:[],assets:[],variables:{},multiplayer:{enabled:false,url:'',key:'',maxPlayers:8},rooms:[]};
   let currentRoom=null,currentEnemy=null,currentGun=null,currentWave=null;
   const getRoom=name=>np.rooms.find(r=>r.name.toLowerCase()===String(name).toLowerCase());
   const ensureRoom=()=>{
@@ -83,7 +83,9 @@ spawn "Small Zombie" 12`;const m=modal('Generate Game from DerpyScript',`<p>Runs
     let m;
     if((m=line.match(/^create game(?:\s+"([^"]+)")?/i)))np.name=m[1]||np.name;
     else if((m=line.match(/^game background\s+(.+)/i)))np.background=m[1];
-    else if((m=line.match(/^game type\s+(topdown|platformer)/i)))np.gameType=m[1].toLowerCase();
+    else if((m=line.match(/^(?:game type|movement mode)\s+(topdown|platformer|bouncy|throw|flying|hover|swimming|dash|custom)/i))){
+ np.movementMode=m[1].toLowerCase();np.gameType=(np.movementMode==='platformer'||np.movementMode==='bouncy')?'platformer':'topdown';
+}
     else if((m=line.match(/^create room\s+"([^"]+)"(?:\s+(game|menu))?/i))&&np.rooms.length<10){
       const id=uid();currentRoom={id,name:m[1],type:m[2]||'game',cameraMode:'fixed',width:1280,height:720,infinite:false,musicId:'',objects:[],waveEnabled:false,waves:[]};
       np.rooms.push(currentRoom);np.startRoom||=id;currentEnemy=null;currentGun=null;currentWave=null;
@@ -119,7 +121,12 @@ spawn "Small Zombie" 12`;const m=modal('Generate Game from DerpyScript',`<p>Runs
     else if((m=line.match(/^spawn\s+"([^"]+)"\s+(\d+)/i))){const r=ensureRoom(),enemy=r.objects.find(o=>o.type==='being'&&o.beingRole==='enemy'&&o.name.toLowerCase()===m[1].toLowerCase());if(currentWave&&enemy)currentWave.entries.push({enemyId:enemy.id,count:Number(m[2]),speed:enemy.speed,lootItemId:''})}
   }
   if(!np.rooms.length)ensureRoom();
-  p=np;roomId=p.startRoom;sel=null;sync();render();persistProject();status('Generated '+p.rooms.length+' Room(s), '+p.rooms.reduce((n,r)=>n+r.objects.length,0)+' Object(s).');
+  p=np;
+for(const r of p.rooms)for(const o of r.objects){
+ if(o.generatedSpriteName){const a=p.assets.find(x=>x.name.toLowerCase()===o.generatedSpriteName.toLowerCase());if(a)o.assetId=a.id}
+ if(o.projectileSpriteName){const a=p.assets.find(x=>x.name.toLowerCase()===o.projectileSpriteName.toLowerCase());if(a)o.projectileAssetId=a.id}
+}
+roomId=p.startRoom;sel=null;sync();render();persistProject();status('Generated '+p.rooms.length+' Room(s), '+p.rooms.reduce((n,r)=>n+r.objects.length,0)+' Object(s).');
  }
  // Multiplayer settings
  q('onlineBtn').onclick=()=>{p.multiplayer??={enabled:false,url:'',key:'',maxPlayers:8};const m=modal('Multiplayer',`<label class="checkrow">Enable multiplayer<input id="mpEnabled" type="checkbox" ${p.multiplayer.enabled?'checked':''}></label><label>Supabase Project URL<input id="mpUrl" value="${p.multiplayer.url||''}"></label><label>Publishable / anon key<input id="mpKey" type="password" value="${p.multiplayer.key||''}"></label><label>Maximum players<input id="mpMax" type="number" min="2" max="32" value="${p.multiplayer.maxPlayers||8}"></label><hr><div class="v1Row"><input id="playerName" placeholder="Player name" value="${localStorage.getItem('derpedit.playerName')||'Player'}"><input id="joinCode" maxlength="6" placeholder="JOIN CODE" value="${localStorage.getItem('derpedit.joinCode')||''}"></div><div class="v1Row"><button id="hostRoom">Create Code</button><button id="joinRoom">Join/Test</button><button id="leaveRoom">Disconnect</button></div><p class="muted">A Join Lobby Room is always created while multiplayer is enabled. Exported multiplayer projects need the Supabase Realtime setup from SUPABASE_MULTIPLAYER_SETUP.sql.</p><div class="v1Actions"><button id="saveMp">Save Settings</button></div>`);m.querySelector('#hostRoom').onclick=()=>m.querySelector('#joinCode').value=window.DerpeditMultiplayer.hostCode();m.querySelector('#joinRoom').onclick=async()=>{try{await window.DerpeditMultiplayer.connect(m.querySelector('#joinCode').value,m.querySelector('#playerName').value);status('Multiplayer test connected.')}catch(e){alert(e.message)}};m.querySelector('#leaveRoom').onclick=()=>window.DerpeditMultiplayer.disconnect();m.querySelector('#saveMp').onclick=()=>{checkpoint();p.multiplayer={enabled:m.querySelector('#mpEnabled').checked,url:m.querySelector('#mpUrl').value.trim(),key:m.querySelector('#mpKey').value.trim(),maxPlayers:Number(m.querySelector('#mpMax').value)||8};window.DerpeditMultiplayer.ensureLobby();persistProject();render();m.remove();status('Multiplayer settings saved.')}};
@@ -148,29 +155,5 @@ spawn "Small Zombie" 12`;const m=modal('Generate Game from DerpyScript',`<p>Runs
  );
  normalize();render();
 
- // v1.1 movement types: patches player input without replacing the renderer.
- const oldStartMovement=startGame;
- startGame=function(id,preserve=false){
-   oldStartMovement(id,preserve);
-   if(game){
-     game.pl.movementType??='normal';
-     game.pl.bouncePower??=430;
-     game.pl.throwPower??=700;
-     game.pl._throwVX??=0;game.pl._throwVY??=0;
-   }
- };
- const playCanvas=q('canvas');
- playCanvas?.addEventListener('pointerdown',e=>{
-   if(!game||game.pl.movementType!=='throw')return;
-   const rect=playCanvas.getBoundingClientRect();
-   const screenX=(e.clientX-rect.left)*(game.w/rect.width);
-   const screenY=(e.clientY-rect.top)*(game.h/rect.height);
-   const pt=window.DerpeditCamera?window.DerpeditCamera.screenToWorld(game,screenX,screenY):{x:screenX,y:screenY};
-   const cx=game.pl.x+game.pl.w/2,cy=game.pl.y+game.pl.h/2;
-   const dx=pt.x-cx,dy=pt.y-cy,len=Math.hypot(dx,dy)||1;
-   game.pl._throwVX=dx/len*(game.pl.throwPower||700);
-   game.pl._throwVY=dy/len*(game.pl.throwPower||700);
-   game.pl._throwing=true;
- });
 
 })();

@@ -98,3 +98,11 @@
 
 /* v1.1 Part 1 */
 #catapultFields,#breakableFields{border-top:1px solid #ffffff18;padding-top:8px;margin-top:8px}
+
+/* v1.2 unified movement */
+.movementAdvanced{margin:10px 0;padding:8px;border:1px solid #ffffff1d;border-radius:5px}
+.movementAdvanced summary{cursor:pointer;font-weight:700;margin-bottom:8px}
+
+/* v1.2 full creation update */
+.derpThingBox{max-width:820px}
+#textStyleFields,#breakableFields{border-top:1px solid #ffffff18;padding-top:8px;margin-top:8px}

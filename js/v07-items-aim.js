@@ -380,7 +380,7 @@
       return;
     }
     if(event.key.toLowerCase()==='f'){event.preventDefault();attack(game)}
-    if(event.code==='Space'&&p.gameType!=='platformer'){event.preventDefault();attack(game)}
+    if(event.code==='Space'&&!(p.movementMode==='platformer'||p.movementMode==='bouncy')){event.preventDefault();attack(game)}
   });
 
   const canvas=q('canvas');
