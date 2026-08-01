@@ -50,10 +50,11 @@ function restoreAutosave(){
 }
 const clone=v=>JSON.parse(JSON.stringify(v)),uid=()=>Math.random().toString(36).slice(2)+Date.now().toString(36),room=()=>p.rooms.find(r=>r.id===roomId),selected=()=>room()?.objects.find(o=>o.id===sel),snap=v=>$('snap').checked?Math.round(v/24)*24:Math.round(v);
 function checkpoint(){hist.push(JSON.stringify(p));if(hist.length>70)hist.shift();future=[];buttons()}function buttons(){$('undo').disabled=!hist.length;$('redo').disabled=!future.length}function status(t){$('status').textContent=t}
-function normalize(){if(!p.rooms){p.rooms=[{id:'room1',name:'Level 1',type:'game',objects:p.objects||[]}];p.startRoom='room1';delete p.objects}delete p.runtimeInventory;p.assets=p.assets||[];p.music=p.music||[];p.sounds=p.sounds||[];p.variables=p.variables||{};p.multiplayer=p.multiplayer||{enabled:false,url:'',key:'',maxPlayers:8};p.movementMode??=p.gameType||'topdown';
+function normalize(){if(!p.rooms){p.rooms=[{id:'room1',name:'Level 1',type:'game',objects:p.objects||[]}];p.startRoom='room1';delete p.objects}delete p.runtimeInventory;p.assets=p.assets||[];p.music=p.music||[];p.sounds=p.sounds||[];p.variables=p.variables||{};p.multiplayer=p.multiplayer||{enabled:false,url:'',key:'',maxPlayers:8};p.screenFit??='contain';
+p.movementMode??=p.gameType||'topdown';
 p.movementSettings??={acceleration:1200,friction:.86,gravity:900,jumpPower:420,throwPower:700,dashPower:850,dashCooldown:.5,swimDrag:.92,throwSticky:true};
 p.movementSettings.acceleration??=1200;p.movementSettings.friction??=.86;p.movementSettings.gravity??=900;p.movementSettings.jumpPower??=420;p.movementSettings.throwPower??=700;p.movementSettings.dashPower??=850;p.movementSettings.dashCooldown??=.5;p.movementSettings.swimDrag??=.92;p.movementSettings.throwSticky??=true;
-p.gameType=(p.movementMode==='platformer'||p.movementMode==='bouncy')?'platformer':'topdown';for(const r of p.rooms){r.cameraMode??='fixed';r.width??=1280;r.height??=720;r.infinite??=false;r.musicId??='';r.waveEnabled??=false;r.waves??=[];r.zoom??=1;r.cameraSmooth??=.18;for(const o of r.objects){o.health??=100;o.damage??=0;o.cooldown??=.5;o.layer??='world';o.script??='';o.action??='none';o.targetRoom??='';o.opacity??=100;o.renderLayer??=0;o.physics??=false;o.gravity??=false;o.collision??=true;o.team??='Neutral';o.animations??={idle:'',walk:'',jump:'',fall:''};o.breakable??=false;o.breakHealth??=100;o.breakDrop??='';o.useGradient??=false;o.gradientStart??=o.color||'#ffffff';o.gradientEnd??='#000000';o.gradientDirection??='vertical';o.fontFamily??='system-ui';o.fontSize??=20;o.textColor??=o.color||'#ffffff';o.fontBold??=false;
+p.gameType=(p.movementMode==='platformer'||p.movementMode==='bouncy')?'platformer':'topdown';for(const r of p.rooms){r.cameraMode??='fixed';r.width??=1280;r.height??=720;r.infinite??=false;r.musicId??='';r.waveEnabled??=false;r.waves??=[];r.zoom??=1;for(const o of r.objects){o.health??=100;o.damage??=0;o.cooldown??=.5;o.layer??='world';o.script??='';o.action??='none';o.targetRoom??='';o.opacity??=100;o.renderLayer??=0;o.physics??=false;o.gravity??=false;o.collision??=true;o.team??='Neutral';o.animations??={idle:'',walk:'',jump:'',fall:''};o.breakable??=false;o.breakHealth??=100;o.breakDrop??='';o.useGradient??=false;o.gradientStart??=o.color||'#ffffff';o.gradientEnd??='#000000';o.gradientDirection??='vertical';o.fontFamily??='system-ui';o.fontSize??=20;o.textColor??=o.color||'#ffffff';o.fontBold??=false;
 if(o.type==='player'){o.type='being';o.beingRole='player';o.behavior='player';}
 if(o.type==='enemy'){o.type='being';o.beingRole='enemy';o.behavior='chase';}
 if(o.type==='wall'){o.type='collisionblock';o.name=o.name==='Wall'?'Collision Block':o.name;o.behavior='solid';o.collision=true;}
@@ -162,7 +163,7 @@ $('del').onclick=del;$('dup').onclick=dup;addEventListener('keydown',e=>{if(['IN
 $('undo').onclick=()=>{if(!hist.length)return;future.push(JSON.stringify(p));p=JSON.parse(hist.pop());normalize();roomId=p.rooms.some(r=>r.id===roomId)?roomId:p.rooms[0].id;sel=null;sync();render();buttons()};$('redo').onclick=()=>{if(!future.length)return;hist.push(JSON.stringify(p));p=JSON.parse(future.pop());normalize();roomId=p.rooms[0].id;sel=null;sync();render();buttons()};
 function sync(){
 $('projectName').value=p.name||'My Derpedit Game';
-$('bg').value=p.background||'#202633';
+$('bg').value=p.background||'#202633';$('screenFit').value=p.screenFit||'contain';
 $('movementMode').value=p.movementMode||p.gameType||'topdown';
 const s=p.movementSettings||{};
 $('moveAcceleration').value=s.acceleration??1200;$('moveFriction').value=s.friction??.86;$('moveGravity').value=s.gravity??900;$('moveJumpPower').value=s.jumpPower??420;$('moveThrowPower').value=s.throwPower??700;$('moveDashPower').value=s.dashPower??850;$('moveDashCooldown').value=s.dashCooldown??.5;$('moveSwimDrag').value=s.swimDrag??.92;$('throwSticky').checked=s.throwSticky!==false;
@@ -177,7 +178,13 @@ function startGame(id,preserveRun=false){
 if(!preserveRun)runState={inventory:{},hotbar:[],equipped:null,collectedByRoom:{}};
 roomId=id||roomId;render();workspace.classList.add('playing');$('playLayer').classList.remove('hidden');$('mode').textContent='PLAY MODE';
 const c=$('canvas'),ctx=c.getContext('2d'),r=workspace.getBoundingClientRect(),d=devicePixelRatio||1;
-c.width=r.width*d;c.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);
+const logicalW=1280,logicalH=720;
+c.width=logicalW*d;c.height=logicalH*d;
+c.style.aspectRatio='16 / 9';
+c.style.width='100%';
+c.style.height='100%';
+c.style.objectFit='contain';
+ctx.setTransform(d,0,0,d,0,0);
 const O=clone(room().objects);O.forEach(o=>o._script=parseScript(o));
 if(!runState)runState={inventory:{},hotbar:[],equipped:null,collectedByRoom:{}};
 runState.collectedByRoom??={};
@@ -186,7 +193,7 @@ for(const o of O)if(o.type==='item'&&alreadyCollected.has(o.id))o.collected=1;
 const sp=O.find(o=>o.behavior==='spawn');
 let pl=O.find(o=>o.type==='being'&&o.beingRole==='player')||O.find(o=>o.behavior==='player')||{id:'p',type:'being',beingRole:'player',name:'Player',x:50,y:50,w:42,h:42,color:'#278cff',speed:220,behavior:'player',health:100,damage:0,cooldown:.5,layer:'world'};
 if(!O.includes(pl))O.push(pl);if(sp){pl.x=sp.x;pl.y=sp.y}
-game={ctx,w:r.width,h:r.height,O,pl,keys:{},got:0,total:O.filter(o=>o.behavior==='coin').length,last:performance.now(),damageTimes:{},vy:0,onGround:false,currentRoom:roomId,
+game={ctx,w:1280,h:720,O,pl,keys:{},got:0,total:O.filter(o=>o.behavior==='coin').length,last:performance.now(),damageTimes:{},vy:0,onGround:false,currentRoom:roomId,
 inventory:runState.inventory,
 hotbar:runState.hotbar,
 equipped:runState.equipped,
@@ -196,7 +203,7 @@ aimX:null,
 aimY:null,
 worldW:Math.max(Number(room().width)||1280,r.width),
 worldH:Math.max(Number(room().height)||720,r.height),
-camera:{x:0,y:0,zoom:Number(room().zoom)||1,smooth:Number(room().cameraSmooth??.18),mode:room().cameraMode||'fixed',infinite:!!room().infinite||room().cameraMode==='infinite'}};
+camera:{x:0,y:0,zoom:Number(room().zoom)||1,mode:room().cameraMode||'fixed',infinite:!!room().infinite||room().cameraMode==='infinite'}};
 buildRuntimeButtons();if(window.renderRuntimeHotbar)window.renderRuntimeHotbar(game);scheduleGameFrame(game)}
 function buildRuntimeButtons(){const box=$('playButtons');box.innerHTML='';for(const o of game.O.filter(o=>o.type==='button'&&o.layer==='ui')){const b=document.createElement('button');b.className='runtimeButton';b.textContent=o.text||o.name;b.style.cssText=`left:${o.x}px;top:${o.y}px;width:${o.w}px;height:${o.h}px;background:${o.color}`;b.onclick=()=>{if(o.action==='goto'&&o.targetRoom){game=null;startGame(o.targetRoom,true)}else if(o.action==='restart'){const id=game.currentRoom;game=null;startGame(id,true)}};box.appendChild(b)}}
 function stopGame(){game=null;runState=null;workspace.classList.remove('playing');$('playLayer').classList.add('hidden');$('mode').textContent='BUILD MODE';$('playButtons').innerHTML='';$('runtimeHotbar')?.classList.add('hidden')}$('play').onclick=()=>{if(!game)startGame(roomId,false)};$('stop').onclick=stopGame;function kd(e){if(game)game.keys[e.key.toLowerCase()]=1}function ku(e){if(game)game.keys[e.key.toLowerCase()]=0}addEventListener('keydown',kd);addEventListener('keyup',ku);
@@ -326,7 +333,7 @@ scheduleGameFrame(g)
 }
 function exported(){const data=JSON.stringify(p).replace(/</g,'\\u003c');return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${p.name}</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#000;color:white;font-family:system-ui}iframe{border:0;width:100%;height:100%}.note{padding:30px}</style></head><body><div class="note"><h1>${p.name}</h1><p>This project was exported from Derpedit v0.2.</p><p>Open the project in Derpedit for full multi-room play testing. Standalone multi-room runtime export is coming in the next update.</p><details><summary>Project data</summary><pre id="data"></pre></details></div><script>const P=${data};document.getElementById('data').textContent=JSON.stringify(P,null,2);<\/script></body></html>`}$('export').onclick=()=>download((p.name||'Game').replace(/\W+/g,'-')+'.html',exported(),'text/html');
 const px=$('pixelCanvas'),pxc=px.getContext('2d'),colors=['#000000','#ffffff','#ff3b4f','#ff9f1c','#ffe74c','#3ddc84','#2389ff','#8d5cff','#8b5a2b','#ff72c6','#5de0e6','#777777','transparent'];let drawColor=colors[0],drawing=false;function drawPixels(){pxc.clearRect(0,0,16,16);pxc.strokeStyle='#ffffff22';pxc.lineWidth=.03;for(let i=0;i<=16;i++){pxc.beginPath();pxc.moveTo(i,0);pxc.lineTo(i,16);pxc.stroke();pxc.beginPath();pxc.moveTo(0,i);pxc.lineTo(16,i);pxc.stroke()}}function pixelAt(e,erase=false){const r=px.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*16),y=Math.floor((e.clientY-r.top)/r.height*16);if(erase||drawColor==='transparent')pxc.clearRect(x,y,1,1);else{pxc.fillStyle=drawColor;pxc.fillRect(x,y,1,1)}}px.onpointerdown=e=>{drawing=true;pixelAt(e,e.button===2)};px.onpointermove=e=>{if(drawing)pixelAt(e,e.buttons===2)};addEventListener('pointerup',()=>drawing=false);px.oncontextmenu=e=>e.preventDefault();const cs=$('colors');for(const c of colors){const b=document.createElement('button');b.className='swatch'+(c===drawColor?' on':'');b.style.background=c==='transparent'?'repeating-conic-gradient(#777 0 25%,#333 0 50%) 0/12px 12px':c;b.onclick=()=>{drawColor=c;[...cs.children].forEach(x=>x.classList.remove('on'));b.classList.add('on')};cs.appendChild(b)}$('newPixel').onclick=()=>{$('pixelModal').classList.remove('hidden');drawPixels()};$('closePixel').onclick=()=>$('pixelModal').classList.add('hidden');$('clearPixel').onclick=drawPixels;$('savePixel').onclick=()=>{checkpoint();const a={id:uid(),name:$('assetName').value||'Sprite',data:px.toDataURL('image/png')};p.assets.push(a);selectedAsset=a.id;$('pixelModal').classList.add('hidden');render();status('Pixel asset saved.')};$('applyAsset').onclick=()=>{const o=selected();if(!o||!selectedAsset)return alert('Select an asset in Asset Explorer first.');checkpoint();o.assetId=selectedAsset;render()};
-document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('on'));b.classList.add('on');for(const n of ['parts','rooms','assets','toolbox'])$('tab-'+n).classList.toggle('hidden',n!==b.dataset.tab)});$('projectName').onchange=render;$('bg').onchange=render;
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('on'));b.classList.add('on');for(const n of ['parts','rooms','assets','toolbox'])$('tab-'+n).classList.toggle('hidden',n!==b.dataset.tab)});$('projectName').onchange=render;$('bg').onchange=render;$('screenFit').onchange=()=>{checkpoint();p.screenFit=$('screenFit').value;persistProject();render()};
 $('movementMode').onchange=()=>{checkpoint();p.movementMode=$('movementMode').value;p.gameType=(p.movementMode==='platformer'||p.movementMode==='bouncy')?'platformer':'topdown';render();persistProject()};
 for(const [id,key,isBool] of [['moveAcceleration','acceleration'],['moveFriction','friction'],['moveGravity','gravity'],['moveJumpPower','jumpPower'],['moveThrowPower','throwPower'],['moveDashPower','dashPower'],['moveDashCooldown','dashCooldown'],['moveSwimDrag','swimDrag'],['throwSticky','throwSticky',true]]){
  $(id).onchange=()=>{checkpoint();p.movementSettings??={};p.movementSettings[key]=isBool?$(id).checked:Number($(id).value);render();persistProject()}
