@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Derpedit v1.2.1</title>
+<title>Derpedit v1.2.2</title>
 <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
 
-<header class="top"><div class="brand"><b>DERPEDIT</b><span>v1.2.1 — Placement Fix</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="templatesBtn">Templates</button><button id="generatorBtn">Generate</button><button id="derpThingBtn">DerpThing</button><button id="valuesGuideBtn">Value Guide</button><button id="onlineBtn">Multiplayer</button><button id="exportZip">Export GitHub ZIP</button><button id="export">Export Single HTML</button></div></header>
+<header class="top"><div class="brand"><b>DERPEDIT</b><span>v1.2.2 — Camera Controls</span></div><div class="tools"><button id="new">New</button><button id="save">Save</button><label class="fake">Load<input id="load" type="file" accept=".derpedit,.json"></label><button id="undo">Undo</button><button id="redo">Redo</button><button class="play" id="play">▶ Play Room</button><button id="guideBtn">📖 Guide</button><button id="templatesBtn">Templates</button><button id="generatorBtn">Generate</button><button id="derpThingBtn">DerpThing</button><button id="valuesGuideBtn">Value Guide</button><button id="onlineBtn">Multiplayer</button><button id="exportZip">Export GitHub ZIP</button><button id="export">Export Single HTML</button></div></header>
 <div class="app">
 <aside class="panel left">
 <div class="tabs"><button class="on" data-tab="parts">Objects</button><button data-tab="rooms">Rooms</button><button data-tab="assets">Sprites</button><button data-tab="toolbox">Toolbox</button></div>
@@ -26,11 +26,16 @@
 <h2>ROOM OBJECTS</h2><div id="scene" class="roomList"></div><p class="muted">Drag the center to move. Drag a corner handle to resize.</p>
 </div>
 <div id="tab-rooms" class="hidden"><h2>ROOMS</h2><div class="row"><button id="addRoom">+ Room</button><button id="addMenu">+ Menu</button></div><div id="rooms" class="roomList section"></div><div class="section"><label class="stack">Room name<input id="roomName"></label><label class="stack">Room type<select id="roomType"><option value="game">Game Room</option><option value="menu">Menu Room</option></select></label><div class="section roomSettings"><h2>ROOM SETTINGS</h2>
-<label class="stack">Camera<select id="cameraMode"><option value="fixed">Fixed</option><option value="follow">Follow Player</option><option value="infinite">Infinite + Follow Player</option></select></label>
 <div class="two"><label>Room Width<input id="roomWidth" type="number" min="320" value="1280"></label><label>Room Height<input id="roomHeight" type="number" min="180" value="720"></label></div>
 <label class="checkrow">Infinite Room<input id="roomInfinite" type="checkbox"></label>
 <label class="stack">Room Music<select id="roomMusic"><option value="">None</option></select></label>
-<label class="stack">In-game Zoom<input id="roomZoom" type="number" min=".25" max="4" step=".05" value="1"></label>
+<div class="section cameraSettings"><h2>CAMERA</h2>
+<label class="stack">Camera<select id="cameraMode"><option value="fixed">Fixed</option><option value="follow">Follow Player</option><option value="infinite">Infinite + Follow Player</option></select></label>
+<label class="stack">Zoom <span id="roomZoomValue">1.00×</span><input id="roomZoom" type="range" min=".1" max="4" step=".05" value="1"></label>
+<div class="two"><button id="zoomOutPreset" type="button">Zoom Out 0.50×</button><button id="zoomResetPreset" type="button">Reset 1.00×</button></div>
+<label class="stack">Smooth Follow <span id="cameraSmoothValue">0.18</span><input id="cameraSmooth" type="range" min="0" max="1" step=".01" value=".18"></label>
+<p class="muted">Lower Zoom = see more of the Room. 0.50× shows about twice as much as 1.00×.</p>
+</div>
 <label class="checkrow">Enable Wave System<input id="waveEnabled" type="checkbox"></label><button id="editWaves" type="button">Edit Waves</button>
 </div><button id="deleteRoom" class="danger">Delete Room</button></div></div>
 <div id="tab-assets" class="hidden"><h2>SPRITE EXPLORER</h2>
@@ -226,5 +231,6 @@ await DerpeditOnline.getLeaderboard("Score", 10)</pre>
 <script src="js/exporter.js"></script>
 <script src="js/v1.js"></script>
 <script src="js/visuals-values-derpthing.js"></script>
+<script src="js/camera-controls.js"></script>
 </body>
 </html>

@@ -30,7 +30,7 @@
     }
 
     // Small smoothing that remains responsive and does not overshoot.
-    const followSpeed=12;
+    const smooth=Math.max(0,Math.min(1,Number(g.camera?.smooth??.18)));const followSpeed=30-(smooth*27);
     const amount=1-Math.exp(-followSpeed*Math.max(0,dt));
     g.camera.x+=(target.x-g.camera.x)*amount;
     g.camera.y+=(target.y-g.camera.y)*amount;
